@@ -1,12 +1,21 @@
 import React from "react";
 import "./globals.css";
-import { Inter } from "next/font/google";
+import { Space_Grotesk, Noto_Sans } from "next/font/google";
 import Navbar from "../components/Navbar";
-import Sidebar from "../components/Sidebar";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { AppSidebar } from "../components/AppSidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
-const inter = Inter({ subsets: ["latin"] });
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-space-grotesk",
+});
+
+const notoSans = Noto_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "700", "900"],
+  variable: "--font-noto-sans",
+});
 
 export const metadata = {
   title: "EzPet - Sistema de Gestão para Pet Shops",
@@ -20,15 +29,18 @@ interface RootLayoutProps {
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="pt-BR">
-      <body className={`${inter.className} bg-background min-h-screen`}>
-        <div className="flex h-screen">
-          <Sidebar />
-          <div className="flex-1 overflow-y-auto">
-            <Navbar />
-            <main className="p-4">{children}</main>
+      <body
+        className={`${spaceGrotesk.variable} ${notoSans.variable} font-sans bg-background min-h-screen`}
+      >
+        <SidebarProvider>
+          <div className="flex h-screen">
+            <AppSidebar />
+            <div className="overflow-y-auto flex-1">
+              <Navbar />
+              <main className="p-4">{children}</main>
+            </div>
           </div>
-        </div>
-        <ToastContainer />
+        </SidebarProvider>
       </body>
     </html>
   );
