@@ -33,11 +33,11 @@ export default function RootLayout({ children }: RootLayoutProps) {
         className={`${spaceGrotesk.variable} ${notoSans.variable} font-sans bg-background min-h-screen`}
       >
         <SidebarProvider>
-          <div className="flex h-screen">
+          <div className="flex w-full h-screen">
             <AppSidebar />
             <div className="overflow-y-auto flex-1">
               <Navbar />
-              <main className="p-4">{children}</main>
+              <main className="p-10">{children}</main>
             </div>
           </div>
         </SidebarProvider>

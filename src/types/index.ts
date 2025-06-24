@@ -1,13 +1,13 @@
-export interface Produto {
+export interface Product {
   id: string;
-  nome: string;
-  quantidade: number;
-  preco: number;
-  categoria: string;
-  descricao?: string;
-  estoqueMinimo: number;
-  dataCadastro?: Date;
-  dataAtualizacao?: Date;
+  name: string;
+  quantity: number;
+  price: number;
+  category: string;
+  description?: string;
+  minStock: number;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface Agendamento {

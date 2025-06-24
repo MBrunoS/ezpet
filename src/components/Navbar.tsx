@@ -1,22 +1,20 @@
 "use client";
 import React, { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
-import Link from "next/link";
 import { FaBell, FaSignOutAlt } from "react-icons/fa";
-import { useEstoque } from "../hooks/useEstoque";
+import { useStock } from "../hooks/useStock";
 import { useAgendamentos } from "../hooks/useAgendamentos";
 import NotificacaoItem from "./NotificacaoItem";
-import { Produto, Agendamento } from "../types";
+import { Product, Agendamento } from "../types";
 import { SidebarTrigger } from "./ui/sidebar";
 
 export default function Navbar(): React.ReactElement {
   const { user, signOut } = useAuth();
-  const { produtosBaixoEstoque } = useEstoque();
+  const { lowStockProducts } = useStock();
   const { agendamentosHoje } = useAgendamentos();
   const [showNotifications, setShowNotifications] = useState<boolean>(false);
 
-  const totalNotificacoes =
-    produtosBaixoEstoque.length + agendamentosHoje.length;
+  const totalNotifications = lowStockProducts.length + agendamentosHoje.length;
 
   return (
     <header className="flex justify-between items-center px-10 py-3 whitespace-nowrap border-b border-solid border-b-border">
@@ -36,9 +34,9 @@ export default function Navbar(): React.ReactElement {
               onClick={() => setShowNotifications(!showNotifications)}
             >
               <FaBell className="text-lg" />
-              {totalNotificacoes > 0 && (
+              {totalNotifications > 0 && (
                 <span className="flex absolute top-0 right-0 justify-center items-center w-4 h-4 text-xs text-white rounded-full bg-error">
-                  {totalNotificacoes}
+                  {totalNotifications}
                 </span>
               )}
             </button>
@@ -49,19 +47,19 @@ export default function Navbar(): React.ReactElement {
                   <h3 className="font-medium text-text">Notificações</h3>
                 </div>
                 <div className="overflow-y-auto max-h-80">
-                  {produtosBaixoEstoque.length === 0 &&
+                  {lowStockProducts.length === 0 &&
                     agendamentosHoje.length === 0 && (
                       <p className="p-4 text-sm text-text-light">
                         Nenhuma notificação
                       </p>
                     )}
 
-                  {produtosBaixoEstoque.map((produto: Produto) => (
+                  {lowStockProducts.map((produto: Product) => (
                     <NotificacaoItem
                       key={`produto-${produto.id}`}
                       tipo="estoque"
-                      titulo={`Estoque baixo: ${produto.nome}`}
-                      descricao={`Restam apenas ${produto.quantidade} unidades`}
+                      titulo={`Estoque baixo: ${produto.name}`}
+                      descricao={`Restam apenas ${produto.quantity} unidades`}
                       link={`/estoque`}
                     />
                   ))}

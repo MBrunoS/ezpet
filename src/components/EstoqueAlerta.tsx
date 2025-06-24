@@ -1,21 +1,21 @@
 import React from "react";
-import { Produto } from "../types";
+import { Product } from "../types";
 
 interface EstoqueAlertaProps {
-  produtos: Produto[];
+  products: Product[];
 }
 
 export default function EstoqueAlerta({
-  produtos,
+  products,
 }: EstoqueAlertaProps): React.ReactElement | null {
-  if (!produtos || produtos.length === 0) return null;
+  if (!products || products.length === 0) return null;
 
   return (
-    <div className="bg-warning-light border-l-4 border-warning p-4 rounded-md">
+    <div className="p-4 rounded-md border-l-4 bg-warning-light border-warning">
       <div className="flex items-center">
         <div className="flex-shrink-0">
           <svg
-            className="h-5 w-5 text-warning"
+            className="w-5 h-5 text-warning"
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 20 20"
             fill="currentColor"
@@ -29,8 +29,8 @@ export default function EstoqueAlerta({
         </div>
         <div className="ml-3">
           <p className="text-sm text-warning-dark">
-            <strong>Atenção!</strong> {produtos.length}{" "}
-            {produtos.length === 1 ? "produto está" : "produtos estão"} com
+            <strong>Atenção!</strong> {products.length}{" "}
+            {products.length === 1 ? "produto está" : "products estão"} com
             estoque baixo.
           </p>
         </div>

@@ -26,7 +26,7 @@ export function AppSidebar() {
 
   const items: MenuItem[] = [
     {
-      text: "Dashboard",
+      text: "Painel",
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -41,7 +41,7 @@ export function AppSidebar() {
       path: "/",
     },
     {
-      text: "Customers",
+      text: "Clientes",
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -56,7 +56,7 @@ export function AppSidebar() {
       path: "/customers",
     },
     {
-      text: "Schedules",
+      text: "Agendamentos",
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -71,7 +71,7 @@ export function AppSidebar() {
       path: "/schedules",
     },
     {
-      text: "Stock",
+      text: "Estoque",
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -86,7 +86,7 @@ export function AppSidebar() {
       path: "/stock",
     },
     {
-      text: "Finance",
+      text: "Financeiro",
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
