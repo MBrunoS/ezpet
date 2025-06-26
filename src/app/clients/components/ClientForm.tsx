@@ -32,8 +32,10 @@ import { ClientWithPets } from "../../../types";
 interface ClientFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: ClientFormData) => Promise<void>;
+  onSubmit: (data: ClientFormData, tempPets: Pet[]) => Promise<void>;
   clientInEdit: ClientWithPets | null;
+  onPetAdded?: () => void;
+  onPetRemoved?: () => void;
 }
 
 export function ClientForm({
@@ -41,6 +43,8 @@ export function ClientForm({
   onClose,
   onSubmit,
   clientInEdit,
+  onPetAdded,
+  onPetRemoved,
 }: ClientFormProps) {
   const [pets, setPets] = useState<Pet[]>([]);
   const [showPetForm, setShowPetForm] = useState(false);
@@ -85,7 +89,7 @@ export function ClientForm({
   };
 
   const handleSubmit = async (data: ClientFormData) => {
-    await onSubmit(data);
+    await onSubmit(data, pets);
   };
 
   const handleClose = () => {
@@ -100,9 +104,19 @@ export function ClientForm({
       // Atualizar pet existente
       await updatePet(editingPet.id, petData);
       setEditingPet(null);
+      // Recarregar pets para refletir a mudança
+      if (clientInEdit) {
+        await loadClientPets(clientInEdit.id);
+      }
     } else if (clientInEdit) {
       // Adicionar novo pet ao cliente existente
-      await addPet({ ...petData, clientId: clientInEdit.id }, clientInEdit.id);
+      await addPet(
+        { ...petData, clientId: clientInEdit.id },
+        clientInEdit.id,
+        onPetAdded
+      );
+      // Recarregar pets para refletir a mudança
+      await loadClientPets(clientInEdit.id);
     } else {
       // Adicionar pet temporário (será salvo quando o cliente for criado)
       const tempPet: Pet = {
@@ -126,8 +140,11 @@ export function ClientForm({
       setPets(pets.filter((p) => p.id !== pet.id));
     } else {
       // Remover pet do banco
-      await removePet(pet.id);
-      setPets(pets.filter((p) => p.id !== pet.id));
+      await removePet(pet.id, pet.clientId, onPetRemoved);
+      // Recarregar pets para refletir a mudança
+      if (clientInEdit) {
+        await loadClientPets(clientInEdit.id);
+      }
     }
   };
 

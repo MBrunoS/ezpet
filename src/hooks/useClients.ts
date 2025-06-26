@@ -18,10 +18,12 @@ interface ClientsState {
 }
 
 interface ClientsMethods {
-  addClient: (client: Omit<Client, 'id'>) => Promise<boolean>;
+  addClient: (client: Omit<Client, 'id' | 'petsCount'>) => Promise<string | null>;
   updateClient: (id: string, updatedData: Partial<Client>) => Promise<boolean>;
   removeClient: (id: string) => Promise<boolean>;
   loadClients: () => Promise<void>;
+  incrementPetsCount: (clientId: string) => Promise<boolean>;
+  decrementPetsCount: (clientId: string) => Promise<boolean>;
 }
 
 export function useClients(): ClientsState & ClientsMethods {
@@ -50,19 +52,20 @@ export function useClients(): ClientsState & ClientsMethods {
     loadClients();
   }, []);
 
-  const addClient = async (client: Omit<Client, 'id'>): Promise<boolean> => {
+  const addClient = async (client: Omit<Client, 'id' | 'petsCount'>): Promise<string | null> => {
     try {
       const newClient = {
         ...client,
+        petsCount: 0,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       };
-      await addDoc(collection(db, 'clients'), newClient);
+      const docRef = await addDoc(collection(db, 'clients'), newClient);
       await loadClients();
-      return true;
+      return docRef.id;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
-      return false;
+      return null;
     }
   };
 
@@ -92,6 +95,40 @@ export function useClients(): ClientsState & ClientsMethods {
     }
   };
 
+  const incrementPetsCount = async (clientId: string): Promise<boolean> => {
+    try {
+      const clientRef = doc(db, 'clients', clientId);
+      await updateDoc(clientRef, {
+        petsCount: {
+          increment: 1
+        },
+        updatedAt: serverTimestamp()
+      });
+      await loadClients();
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      return false;
+    }
+  };
+
+  const decrementPetsCount = async (clientId: string): Promise<boolean> => {
+    try {
+      const clientRef = doc(db, 'clients', clientId);
+      await updateDoc(clientRef, {
+        petsCount: {
+          increment: -1
+        },
+        updatedAt: serverTimestamp()
+      });
+      await loadClients();
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      return false;
+    }
+  };
+
   return {
     clients,
     loading,
@@ -99,6 +136,8 @@ export function useClients(): ClientsState & ClientsMethods {
     addClient,
     updateClient,
     removeClient,
-    loadClients
+    loadClients,
+    incrementPetsCount,
+    decrementPetsCount
   };
 } 

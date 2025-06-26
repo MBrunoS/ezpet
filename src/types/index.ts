@@ -32,6 +32,7 @@ export interface Client {
   email: string;
   phone: string;
   address?: string;
+  petsCount: number;
   createdAt?: Date;
   updatedAt?: Date;
 }

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useClients } from "../../hooks/useClients";
 import { usePets } from "../../hooks/usePets";
-import { ClientWithPets } from "../../types";
+import { ClientWithPets, Pet } from "../../types";
 import { Button } from "../../components/ui/button";
 import { Plus, Users } from "lucide-react";
 import {
@@ -21,6 +21,8 @@ export default function ClientsPage() {
     addClient,
     updateClient,
     removeClient,
+    incrementPetsCount,
+    decrementPetsCount,
   } = useClients();
   const {
     pets,
@@ -36,15 +38,19 @@ export default function ClientsPage() {
     null
   );
 
-  // Carregar pets para cada cliente
+  // Carregar pets para cada cliente (apenas quando necessário)
   useEffect(() => {
     const loadPetsForClients = async () => {
       const clientsWithPetsData = await Promise.all(
         clients.map(async (client) => {
-          const petsByClient = await loadPetsByClient(client.id);
+          // Só carrega pets se o cliente tiver pets ou estiver sendo editado
+          let pets: Pet[] = [];
+          if (client.petsCount > 0 || clientInEdit?.id === client.id) {
+            pets = await loadPetsByClient(client.id);
+          }
           return {
             ...client,
-            pets: petsByClient,
+            pets,
           };
         })
       );
@@ -56,9 +62,9 @@ export default function ClientsPage() {
     } else {
       setClientsWithPets([]);
     }
-  }, [clients]);
+  }, [clients, clientInEdit?.id]);
 
-  const handleSubmit = async (data: ClientFormData) => {
+  const handleSubmit = async (data: ClientFormData, tempPets: Pet[] = []) => {
     if (clientInEdit) {
       const success = await updateClient(clientInEdit.id, data);
       if (success) {
@@ -66,8 +72,24 @@ export default function ClientsPage() {
         setClientInEdit(null);
       }
     } else {
-      const success = await addClient(data);
-      if (success) {
+      const newClientId = await addClient(data);
+      if (newClientId) {
+        // Salvar os pets temporários para o novo cliente
+        if (tempPets.length > 0) {
+          // Salvar cada pet temporário
+          for (const tempPet of tempPets) {
+            if (tempPet.id.startsWith("temp-")) {
+              const { id, clientId, ...petData } = tempPet;
+              await addPet(
+                { ...petData, clientId: newClientId },
+                newClientId,
+                () => {
+                  incrementPetsCount(newClientId);
+                }
+              );
+            }
+          }
+        }
         setIsDialogOpen(false);
       }
     }
@@ -93,6 +115,19 @@ export default function ClientsPage() {
   const closeDialog = () => {
     setIsDialogOpen(false);
     setClientInEdit(null);
+  };
+
+  // Funções wrapper para capturar o clientId
+  const handlePetAdded = () => {
+    if (clientInEdit) {
+      incrementPetsCount(clientInEdit.id);
+    }
+  };
+
+  const handlePetRemoved = () => {
+    if (clientInEdit) {
+      decrementPetsCount(clientInEdit.id);
+    }
   };
 
   const loading = loadingClients || loadingPets;
@@ -149,6 +184,8 @@ export default function ClientsPage() {
         onClose={closeDialog}
         onSubmit={handleSubmit}
         clientInEdit={clientInEdit}
+        onPetAdded={handlePetAdded}
+        onPetRemoved={handlePetRemoved}
       />
 
       <DeleteConfirmationDialog

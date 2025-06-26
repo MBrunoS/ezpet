@@ -20,9 +20,9 @@ interface PetsState {
 }
 
 interface PetsMethods {
-  addPet: (pet: Omit<Pet, 'id'>, clientId: string) => Promise<boolean>;
+  addPet: (pet: Omit<Pet, 'id'>, clientId: string, onPetAdded?: () => void) => Promise<boolean>;
   updatePet: (id: string, updatedData: Partial<Pet>) => Promise<boolean>;
-  removePet: (id: string) => Promise<boolean>;
+  removePet: (id: string, clientId: string, onPetRemoved?: () => void) => Promise<boolean>;
   loadPetsByClient: (clientId: string) => Promise<Pet[]>;
   loadAllPets: () => Promise<void>;
 }
@@ -65,7 +65,7 @@ export function usePets(): PetsState & PetsMethods {
     }
   }, []);
 
-  const addPet = useCallback(async (pet: Omit<Pet, 'id'>, clientId: string): Promise<boolean> => {
+  const addPet = useCallback(async (pet: Omit<Pet, 'id'>, clientId: string, onPetAdded?: () => void): Promise<boolean> => {
     try {
       const newPet = {
         ...pet,
@@ -75,6 +75,9 @@ export function usePets(): PetsState & PetsMethods {
       };
       await addDoc(collection(db, 'pets'), newPet);
       await loadAllPets();
+      if (onPetAdded) {
+        onPetAdded();
+      }
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Um erro ocorreu');
@@ -97,10 +100,13 @@ export function usePets(): PetsState & PetsMethods {
     }
   }, [loadAllPets]);
 
-  const removePet = useCallback(async (id: string): Promise<boolean> => {
+  const removePet = useCallback(async (id: string, clientId: string, onPetRemoved?: () => void): Promise<boolean> => {
     try {
       await deleteDoc(doc(db, 'pets', id));
       await loadAllPets();
+      if (onPetRemoved) {
+        onPetRemoved();
+      }
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Um erro ocorreu');
