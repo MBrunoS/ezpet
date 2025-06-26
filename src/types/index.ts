@@ -26,24 +26,32 @@ export interface Agendamento {
   dataAtualizacao?: Date;
 }
 
-export interface Cliente {
+export interface Client {
   id: string;
-  nome: string;
+  name: string;
   email: string;
-  telefone: string;
-  endereco?: string;
-  pets: Pet[];
+  phone: string;
+  address?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface Pet {
   id: string;
-  nome: string;
-  especie: string;
-  raca: string;
-  idade: number;
-  peso: number;
-  observacoes?: string;
+  clientId: string;
+  name: string;
+  species: string;
+  breed: string;
+  age: number;
+  weight: number;
+  observations?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
+
+export interface ClientWithPets extends Client {
+  pets: Pet[];
+} 
 
 export interface User {
   id: string;

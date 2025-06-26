@@ -1,11 +1,11 @@
 import React from "react";
-import { Cliente } from "../types";
+import { Client } from "../types";
 
 interface ClienteCardProps {
-  cliente: Cliente;
-  onEditar: (cliente: Cliente) => void;
+  cliente: Client;
+  onEditar: (cliente: Client) => void;
   onExcluir: (id: string) => void;
-  onVerDetalhes: (cliente: Cliente) => void;
+  onVerDetalhes: (cliente: Client) => void;
 }
 
 export default function ClienteCard({
@@ -17,10 +17,10 @@ export default function ClienteCard({
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
       <div className="p-4">
-        <h3 className="text-lg font-medium text-gray-900">{cliente.nome}</h3>
+        <h3 className="text-lg font-medium text-gray-900">{cliente.name}</h3>
 
         <div className="mt-2 text-sm text-gray-500">
-          {cliente.telefone && <p>{cliente.telefone}</p>}
+          {cliente.phone && <p>{cliente.phone}</p>}
           {cliente.email && <p className="truncate">{cliente.email}</p>}
         </div>
 

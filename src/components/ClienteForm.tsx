@@ -1,6 +1,6 @@
 import React, { useState, ChangeEvent } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
-import { Cliente, Pet } from "../types";
+import { Client, Pet } from "../types";
 
 interface ClienteFormData {
   nome: string;
@@ -17,8 +17,8 @@ interface NovoPet {
 }
 
 interface ClienteFormProps {
-  cliente?: Cliente;
-  onSubmit: (data: Cliente) => Promise<void>;
+  cliente?: Client;
+  onSubmit: (data: Client) => Promise<void>;
   onCancel?: () => void;
 }
 
@@ -56,9 +56,9 @@ export default function ClienteForm({
         {
           ...novoPet,
           id: Date.now().toString(),
-          idade: parseInt(novoPet.idade) || 0,
-          peso: 0,
-          observacoes: "",
+          age: parseInt(novoPet.idade) || 0,
+          weight: 0,
+          observations: "",
         },
       ]);
       setNovoPet({ nome: "", especie: "", raca: "", idade: "" });
@@ -173,10 +173,10 @@ export default function ClienteForm({
                 className="p-3 border rounded-md flex justify-between items-center"
               >
                 <div>
-                  <p className="font-medium">{pet.nome}</p>
+                  <p className="font-medium">{pet.name}</p>
                   <p className="text-sm text-gray-600">
-                    {pet.especie} - {pet.raca}{" "}
-                    {pet.idade ? `- ${pet.idade} ano(s)` : ""}
+                    {pet.species} - {pet.breed}{" "}
+                    {pet.age ? `- ${pet.age} ano(s)` : ""}
                   </p>
                 </div>
                 <button

@@ -2,9 +2,9 @@ import React, { useState, useEffect, ChangeEvent } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { useClientes } from "../hooks/useClientes";
+import { useClients } from "../hooks/useClients";
 import { formatCurrency } from "../lib/utils";
-import { Agendamento, Cliente, Pet } from "../types";
+import { Agendamento, Client, Pet } from "../types";
 
 interface Servico {
   id: string;
@@ -58,7 +58,7 @@ export default function AgendamentoForm({
         },
   });
 
-  const { clientes } = useClientes();
+  const { clients: clientes } = useClients();
   const [loading, setLoading] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<Date>(
     agendamento?.data || new Date()
@@ -116,7 +116,7 @@ export default function AgendamentoForm({
         ...data,
         id: agendamento?.id || "",
         valor: parseFloat(data.valor),
-        clienteNome: clienteSelecionado?.nome || "",
+        clienteNome: clienteSelecionado?.name || "",
         petNome: petSelecionado?.nome || "",
         servicoNome: servicoSelecionado?.nome || "",
         status: agendamento?.status || "agendado",
@@ -146,7 +146,7 @@ export default function AgendamentoForm({
             <option value="">Selecione um cliente</option>
             {clientes.map((cliente) => (
               <option key={cliente.id} value={cliente.id}>
-                {cliente.nome}
+                {cliente.name}
               </option>
             ))}
           </select>
@@ -173,7 +173,7 @@ export default function AgendamentoForm({
             <option value="">Selecione um pet</option>
             {pets.map((pet) => (
               <option key={pet.id} value={pet.id}>
-                {pet.nome} - {pet.especie}
+                {pet.name} - {pet.species}
               </option>
             ))}
           </select>
