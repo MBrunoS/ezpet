@@ -4,14 +4,13 @@ import React, { useState } from "react";
 import { useAppointments } from "../../hooks/useAppointments";
 import { useClients } from "../../hooks/useClients";
 import { usePets } from "../../hooks/usePets";
-import { Appointment, Client, Pet } from "../../types";
+import { useServices } from "../../hooks/useServices";
+import { Appointment } from "../../types";
 import { Button } from "../../components/ui/button";
-import { Plus, Calendar, Clock } from "lucide-react";
-import {
-  AppointmentForm,
-  AppointmentTable,
-  DeleteConfirmationDialog,
-} from "./components";
+import { Plus, Calendar, Clock, User, PawPrint } from "lucide-react";
+import { AppointmentForm } from "./components/AppointmentForm";
+import { AppointmentTable } from "./components/AppointmentTable";
+import { DeleteConfirmationDialog } from "./components/DeleteConfirmationDialog";
 import { AppointmentFormData } from "./schema";
 
 export default function AppointmentsPage() {
@@ -22,7 +21,6 @@ export default function AppointmentsPage() {
     addAppointment,
     updateAppointment,
     removeAppointment,
-    checkTimeSlotAvailability,
   } = useAppointments();
 
   const {
@@ -31,39 +29,44 @@ export default function AppointmentsPage() {
     error: errorClients,
   } = useClients();
 
+  const { pets, loading: loadingPets, error: errorPets } = usePets();
+
   const {
-    loading: loadingPets,
-    error: errorPets,
-    loadPetsByClient,
-  } = usePets();
+    services,
+    loading: loadingServices,
+    error: errorServices,
+    getServiceById,
+  } = useServices();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [appointmentInEdit, setAppointmentInEdit] =
     useState<Appointment | null>(null);
   const [appointmentToDelete, setAppointmentToDelete] =
     useState<Appointment | null>(null);
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [clientPets, setClientPets] = useState<Pet[]>([]);
 
   const handleSubmit = async (data: AppointmentFormData) => {
-    if (!selectedClient) return;
+    // Buscar informações do cliente, pet e serviço
+    const client = clients.find((c) => c.id === data.clientId);
+    const pet = pets.find((p) => p.id === data.petId);
+    const service = services.find((s) => s.id === data.serviceId);
 
-    const selectedPet = clientPets.find((pet) => pet.id === data.petId);
-    if (!selectedPet) return;
+    if (!client || !pet || !service) {
+      console.error("Dados não encontrados");
+      return;
+    }
 
-    const appointmentDate = new Date(`${data.date}T${data.time}`);
-
-    const appointmentData: Omit<Appointment, "id"> = {
+    const appointmentData = {
       clientId: data.clientId,
       petId: data.petId,
-      serviceName: data.serviceType,
-      service: data.serviceType,
-      clientName: selectedClient.name,
-      petName: selectedPet.name,
-      date: appointmentDate,
-      price: 0, // Pode ser implementado um sistema de preços depois
-      observations: data.observations || "",
-      status: "scheduled",
+      serviceId: data.serviceId,
+      serviceName: service.name,
+      service: service.name, // Mantendo compatibilidade
+      clientName: client.name,
+      petName: pet.name,
+      date: data.date,
+      price: service.price,
+      observations: data.observations,
+      status: "scheduled" as const,
     };
 
     if (appointmentInEdit) {
@@ -74,27 +77,17 @@ export default function AppointmentsPage() {
       if (success) {
         setIsDialogOpen(false);
         setAppointmentInEdit(null);
-        setSelectedClient(null);
-        setClientPets([]);
       }
     } else {
       const success = await addAppointment(appointmentData);
       if (success) {
         setIsDialogOpen(false);
-        setSelectedClient(null);
-        setClientPets([]);
       }
     }
   };
 
   const handleEdit = (appointment: Appointment) => {
     setAppointmentInEdit(appointment);
-    // Buscar cliente e pets para preencher o formulário
-    const client = clients.find((c) => c.id === appointment.clientId);
-    if (client) {
-      setSelectedClient(client);
-      loadClientPets(client.id);
-    }
     setIsDialogOpen(true);
   };
 
@@ -105,50 +98,31 @@ export default function AppointmentsPage() {
     }
   };
 
-  const handleClientChange = async (clientId: string) => {
-    const client = clients.find((c) => c.id === clientId);
-    setSelectedClient(client || null);
-    if (client) {
-      await loadClientPets(client.id);
-    } else {
-      setClientPets([]);
-    }
-  };
-
-  const loadClientPets = async (clientId: string) => {
-    const pets = await loadPetsByClient(clientId);
-    setClientPets(pets);
-  };
-
   const openNewDialog = () => {
     setAppointmentInEdit(null);
-    setSelectedClient(null);
-    setClientPets([]);
     setIsDialogOpen(true);
   };
 
   const closeDialog = () => {
     setIsDialogOpen(false);
     setAppointmentInEdit(null);
-    setSelectedClient(null);
-    setClientPets([]);
   };
 
-  const loading = loadingAppointments || loadingClients || loadingPets;
-  const error = errorAppointments || errorClients || errorPets;
-
-  if (loading) {
+  if (loadingAppointments || loadingClients || loadingPets || loadingServices) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="text-lg">Carregando agendamentos...</div>
+        <div className="text-lg">Carregando...</div>
       </div>
     );
   }
 
-  if (error) {
+  if (errorAppointments || errorClients || errorPets || errorServices) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="text-red-500">Erro: {error}</div>
+        <div className="text-red-500">
+          Erro:{" "}
+          {errorAppointments || errorClients || errorPets || errorServices}
+        </div>
       </div>
     );
   }
@@ -189,10 +163,9 @@ export default function AppointmentsPage() {
         onSubmit={handleSubmit}
         appointmentInEdit={appointmentInEdit}
         clients={clients}
-        clientPets={clientPets}
-        onClientChange={handleClientChange}
-        selectedClient={selectedClient}
-        checkTimeSlotAvailability={checkTimeSlotAvailability}
+        pets={pets}
+        loadingPets={loadingPets}
+        errorPets={errorPets}
       />
 
       <DeleteConfirmationDialog

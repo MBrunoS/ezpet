@@ -29,28 +29,20 @@ import {
 } from "../../../components/ui/select";
 import { Input } from "../../../components/ui/input";
 import { Textarea } from "../../../components/ui/textarea";
-import { Calendar, Clock, Users, PawPrint } from "lucide-react";
-import { Appointment, Client, Pet } from "../../../types";
-import {
-  appointmentSchema,
-  AppointmentFormData,
-  serviceTypes,
-  timeSlots,
-} from "../schema";
+import { Calendar, Clock, User, PawPrint, DollarSign } from "lucide-react";
+import { Appointment } from "../../../types";
+import { appointmentSchema, AppointmentFormData } from "../schema";
+import { useServices } from "../../../hooks/useServices";
 
 interface AppointmentFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: AppointmentFormData) => Promise<void>;
   appointmentInEdit: Appointment | null;
-  clients: Client[];
-  clientPets: Pet[];
-  onClientChange: (clientId: string) => Promise<void>;
-  selectedClient: Client | null;
-  checkTimeSlotAvailability: (
-    date: Date,
-    excludeId?: string
-  ) => Promise<boolean>;
+  clients: any[];
+  pets: any[];
+  loadingPets: boolean;
+  errorPets: string | null;
 }
 
 export function AppointmentForm({
@@ -59,22 +51,20 @@ export function AppointmentForm({
   onSubmit,
   appointmentInEdit,
   clients,
-  clientPets,
-  onClientChange,
-  selectedClient,
-  checkTimeSlotAvailability,
+  pets,
+  loadingPets,
+  errorPets,
 }: AppointmentFormProps) {
   const [loading, setLoading] = useState(false);
-  const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([]);
+  const { services, loading: loadingServices } = useServices();
 
   const form = useForm<AppointmentFormData>({
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
       clientId: "",
       petId: "",
-      serviceType: "",
-      date: "",
-      time: "",
+      serviceId: "",
+      date: new Date(),
       observations: "",
     },
   });
@@ -82,54 +72,23 @@ export function AppointmentForm({
   // Preencher formulário quando estiver editando
   useEffect(() => {
     if (appointmentInEdit && isOpen) {
-      const appointmentDate = appointmentInEdit.date;
-      const dateStr = appointmentDate.toISOString().split("T")[0];
-      const timeStr = appointmentDate.toTimeString().slice(0, 5);
-
       form.reset({
         clientId: appointmentInEdit.clientId,
         petId: appointmentInEdit.petId,
-        serviceType: appointmentInEdit.service,
-        date: dateStr,
-        time: timeStr,
+        serviceId: appointmentInEdit.serviceId,
+        date: appointmentInEdit.date,
         observations: appointmentInEdit.observations || "",
       });
     } else if (!appointmentInEdit && isOpen) {
       form.reset({
         clientId: "",
         petId: "",
-        serviceType: "",
-        date: "",
-        time: "",
+        serviceId: "",
+        date: new Date(),
         observations: "",
       });
     }
   }, [appointmentInEdit, isOpen, form]);
-
-  // Verificar horários disponíveis quando a data mudar
-  useEffect(() => {
-    const date = form.watch("date");
-    if (date) {
-      checkAvailableTimeSlots(date);
-    }
-  }, [form.watch("date")]);
-
-  const checkAvailableTimeSlots = async (date: string) => {
-    const availableSlots: string[] = [];
-
-    for (const timeSlot of timeSlots) {
-      const appointmentDate = new Date(`${date}T${timeSlot}`);
-      const isAvailable = await checkTimeSlotAvailability(
-        appointmentDate,
-        appointmentInEdit?.id
-      );
-      if (isAvailable) {
-        availableSlots.push(timeSlot);
-      }
-    }
-
-    setAvailableTimeSlots(availableSlots);
-  };
 
   const handleSubmit = async (data: AppointmentFormData) => {
     setLoading(true);
@@ -140,20 +99,50 @@ export function AppointmentForm({
     }
   };
 
-  const handleClientChange = async (clientId: string) => {
-    form.setValue("clientId", clientId);
-    form.setValue("petId", ""); // Reset pet selection
-    await onClientChange(clientId);
+  const selectedClientId = form.watch("clientId");
+  const selectedServiceId = form.watch("serviceId");
+
+  // Filtrar pets do cliente selecionado
+  const clientPets = pets.filter((pet) => pet.clientId === selectedClientId);
+
+  // Buscar informações do serviço selecionado
+  const selectedService = services.find(
+    (service) => service.id === selectedServiceId
+  );
+
+  // Gerar horários disponíveis (8h às 18h, intervalos de 30 minutos)
+  const generateTimeSlots = () => {
+    const slots = [];
+    const startHour = 8;
+    const endHour = 18;
+
+    for (let hour = startHour; hour < endHour; hour++) {
+      for (let minute = 0; minute < 60; minute += 30) {
+        const time = new Date();
+        time.setHours(hour, minute, 0, 0);
+        slots.push(time);
+      }
+    }
+
+    return slots;
   };
 
-  const handleClose = () => {
-    onClose();
-    setAvailableTimeSlots([]);
+  const timeSlots = generateTimeSlots();
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString("pt-BR");
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
             {appointmentInEdit ? "Editar Agendamento" : "Novo Agendamento"}
@@ -161,7 +150,7 @@ export function AppointmentForm({
           <DialogDescription>
             {appointmentInEdit
               ? "Atualize as informações do agendamento"
-              : "Agende um novo serviço para um pet"}
+              : "Agende um novo serviço"}
           </DialogDescription>
         </DialogHeader>
 
@@ -170,19 +159,19 @@ export function AppointmentForm({
             onSubmit={form.handleSubmit(handleSubmit)}
             className="space-y-6"
           >
-            {/* Seleção de Cliente */}
+            {/* Cliente */}
             <FormField
               control={form.control}
               name="clientId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex gap-2 items-center">
-                    <Users className="w-4 h-4" />
+                    <User className="w-4 h-4" />
                     Cliente
                   </FormLabel>
                   <Select
                     value={field.value}
-                    onValueChange={handleClientChange}
+                    onValueChange={field.onChange}
                     disabled={loading}
                   >
                     <FormControl>
@@ -191,16 +180,16 @@ export function AppointmentForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {clients.length > 0 ? (
-                        clients.map((client) => (
-                          <SelectItem key={client.id} value={client.id}>
-                            {client.name} - {client.phone}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="no-clients" disabled>
+                      {clients.length === 0 ? (
+                        <SelectItem value="" disabled>
                           Nenhum cliente cadastrado
                         </SelectItem>
+                      ) : (
+                        clients.map((client) => (
+                          <SelectItem key={client.id} value={client.id}>
+                            {client.name}
+                          </SelectItem>
+                        ))
                       )}
                     </SelectContent>
                   </Select>
@@ -209,7 +198,7 @@ export function AppointmentForm({
               )}
             />
 
-            {/* Seleção de Pet */}
+            {/* Pet */}
             <FormField
               control={form.control}
               name="petId"
@@ -222,7 +211,7 @@ export function AppointmentForm({
                   <Select
                     value={field.value}
                     onValueChange={field.onChange}
-                    disabled={loading || !selectedClient}
+                    disabled={loading || !selectedClientId || loadingPets}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -230,18 +219,20 @@ export function AppointmentForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {clientPets.length > 0 ? (
+                      {!selectedClientId ? (
+                        <SelectItem value="" disabled>
+                          Selecione um cliente primeiro
+                        </SelectItem>
+                      ) : clientPets.length === 0 ? (
+                        <SelectItem value="" disabled>
+                          Nenhum pet cadastrado para este cliente
+                        </SelectItem>
+                      ) : (
                         clientPets.map((pet) => (
                           <SelectItem key={pet.id} value={pet.id}>
-                            {pet.name} ({pet.species} - {pet.breed})
+                            {pet.name}
                           </SelectItem>
                         ))
-                      ) : (
-                        <SelectItem value="no-pets" disabled>
-                          {selectedClient
-                            ? "Nenhum pet cadastrado"
-                            : "Selecione um cliente primeiro"}
-                        </SelectItem>
                       )}
                     </SelectContent>
                   </Select>
@@ -250,29 +241,44 @@ export function AppointmentForm({
               )}
             />
 
-            {/* Tipo de Serviço */}
+            {/* Serviço */}
             <FormField
               control={form.control}
-              name="serviceType"
+              name="serviceId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tipo de Serviço</FormLabel>
+                  <FormLabel className="flex gap-2 items-center">
+                    <DollarSign className="w-4 h-4" />
+                    Serviço
+                  </FormLabel>
                   <Select
                     value={field.value}
                     onValueChange={field.onChange}
-                    disabled={loading}
+                    disabled={loading || loadingServices}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione o tipo de serviço" />
+                        <SelectValue placeholder="Selecione um serviço" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {serviceTypes.map((service) => (
-                        <SelectItem key={service.value} value={service.value}>
-                          {service.label}
+                      {loadingServices ? (
+                        <SelectItem value="" disabled>
+                          Carregando serviços...
                         </SelectItem>
-                      ))}
+                      ) : services.length === 0 ? (
+                        <SelectItem value="" disabled>
+                          Nenhum serviço cadastrado
+                        </SelectItem>
+                      ) : (
+                        services
+                          .filter((service) => service.isActive)
+                          .map((service) => (
+                            <SelectItem key={service.id} value={service.id}>
+                              {service.name} - R$ {service.price.toFixed(2)}
+                            </SelectItem>
+                          ))
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -280,68 +286,104 @@ export function AppointmentForm({
               )}
             />
 
-            {/* Data e Hora */}
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex gap-2 items-center">
-                      <Calendar className="w-4 h-4" />
-                      Data
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="date"
-                        {...field}
-                        disabled={loading}
-                        min={new Date().toISOString().split("T")[0]}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* Data */}
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex gap-2 items-center">
+                    <Calendar className="w-4 h-4" />
+                    Data
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="date"
+                      {...field}
+                      value={formatDate(field.value)
+                        .split("/")
+                        .reverse()
+                        .join("-")}
+                      onChange={(e) => {
+                        const date = new Date(e.target.value);
+                        const currentTime = field.value;
+                        date.setHours(
+                          currentTime.getHours(),
+                          currentTime.getMinutes()
+                        );
+                        field.onChange(date);
+                      }}
+                      disabled={loading}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              <FormField
-                control={form.control}
-                name="time"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex gap-2 items-center">
-                      <Clock className="w-4 h-4" />
-                      Horário
-                    </FormLabel>
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      disabled={loading || !form.watch("date")}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o horário" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {availableTimeSlots.length > 0 ? (
-                          availableTimeSlots.map((timeSlot) => (
-                            <SelectItem key={timeSlot} value={timeSlot}>
-                              {timeSlot}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <SelectItem value="no-slots" disabled>
-                            Nenhum horário disponível
+            {/* Horário */}
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex gap-2 items-center">
+                    <Clock className="w-4 h-4" />
+                    Horário
+                  </FormLabel>
+                  <Select
+                    value={formatTime(field.value)}
+                    onValueChange={(timeString) => {
+                      const [hours, minutes] = timeString
+                        .split(":")
+                        .map(Number);
+                      const newDate = new Date(field.value);
+                      newDate.setHours(hours, minutes, 0, 0);
+                      field.onChange(newDate);
+                    }}
+                    disabled={loading}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um horário" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {timeSlots.length === 0 ? (
+                        <SelectItem value="" disabled>
+                          Nenhum horário disponível
+                        </SelectItem>
+                      ) : (
+                        timeSlots.map((time) => (
+                          <SelectItem
+                            key={time.getTime()}
+                            value={formatTime(time)}
+                          >
+                            {formatTime(time)}
                           </SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Informações do Serviço */}
+            {selectedService && (
+              <div className="p-4 bg-gray-50 rounded-lg space-y-2">
+                <h4 className="font-medium text-sm">Informações do Serviço</h4>
+                <div className="text-sm text-gray-600 space-y-1">
+                  <div>Nome: {selectedService.name}</div>
+                  <div>Preço: R$ {selectedService.price.toFixed(2)}</div>
+                  <div>Duração: {selectedService.duration} minutos</div>
+                  {selectedService.description && (
+                    <div>Descrição: {selectedService.description}</div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Observações */}
             <FormField
@@ -352,7 +394,7 @@ export function AppointmentForm({
                   <FormLabel>Observações</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Observações sobre o serviço..."
+                      placeholder="Observações adicionais..."
                       className="resize-none"
                       {...field}
                       disabled={loading}
@@ -364,7 +406,7 @@ export function AppointmentForm({
             />
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleClose}>
+              <Button type="button" variant="outline" onClick={onClose}>
                 Cancelar
               </Button>
               <Button type="submit" disabled={loading}>

@@ -12,7 +12,7 @@ import {
   serverTimestamp 
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Appointment } from '../types';
+import { Appointment, Service } from '../types';
 
 interface AppointmentsState {
   appointments: Appointment[];
@@ -26,7 +26,7 @@ interface AppointmentsMethods {
   updateAppointment: (id: string, updatedData: Partial<Appointment>) => Promise<boolean>;
   removeAppointment: (id: string) => Promise<boolean>;
   loadAppointments: () => Promise<void>;
-  checkTimeSlotAvailability: (date: Date, excludeId?: string) => Promise<boolean>;
+  checkTimeSlotAvailability: (date: Date, serviceDuration: number, excludeId?: string) => Promise<boolean>;
   getAppointmentsByDate: (date: Date) => Promise<Appointment[]>;
 }
 
@@ -44,6 +44,9 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
       const appointmentsData = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
+        date: doc.data().date?.toDate() || new Date(),
+        createdAt: doc.data().createdAt?.toDate() || new Date(),
+        updatedAt: doc.data().updatedAt?.toDate() || new Date(),
       })) as Appointment[];
       setAppointments(appointmentsData);
     } catch (err) {
@@ -55,6 +58,7 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
 
   const checkTimeSlotAvailability = useCallback(async (
     date: Date, 
+    serviceDuration: number,
     excludeId?: string
   ): Promise<boolean> => {
     try {
@@ -76,11 +80,22 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
         const appointment = doc.data();
         const appointmentDate = appointment.date.toDate();
         
-        // Verificar se é o mesmo horário (com tolerância de 30 minutos)
-        const timeDiff = Math.abs(appointmentDate.getTime() - date.getTime());
-        const isSameTime = timeDiff < 30 * 60 * 1000; // 30 minutos em millisegundos
+        // Buscar a duração do serviço do agendamento existente
+        // Por enquanto, usar duração padrão de 60 minutos
+        // TODO: Implementar busca da duração real do serviço
+        const existingServiceDuration = 60;
         
-        return isSameTime && doc.id !== excludeId;
+        const existingStart = appointmentDate.getTime();
+        const existingEnd = existingStart + (existingServiceDuration * 60 * 1000);
+        
+        // Calcular o período do novo agendamento
+        const newStart = date.getTime();
+        const newEnd = newStart + (serviceDuration * 60 * 1000);
+        
+        // Verificar se há sobreposição
+        const hasOverlap = (newStart < existingEnd && newEnd > existingStart);
+        
+        return hasOverlap && doc.id !== excludeId;
       });
 
       return appointmentsWithConflict.length === 0;
@@ -109,6 +124,9 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
       return snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
+        date: doc.data().date?.toDate() || new Date(),
+        createdAt: doc.data().createdAt?.toDate() || new Date(),
+        updatedAt: doc.data().updatedAt?.toDate() || new Date(),
       })) as Appointment[];
     } catch (err) {
       console.error('Erro ao buscar agendamentos por data:', err);
@@ -118,8 +136,12 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
 
   const addAppointment = useCallback(async (appointment: Omit<Appointment, 'id'>): Promise<boolean> => {
     try {
+      // Por enquanto, usar duração padrão de 60 minutos
+      // TODO: Buscar duração real do serviço
+      const serviceDuration = 60;
+      
       // Verificar se o horário está disponível
-      const isAvailable = await checkTimeSlotAvailability(appointment.date);
+      const isAvailable = await checkTimeSlotAvailability(appointment.date, serviceDuration);
       if (!isAvailable) {
         setError('Este horário já está ocupado');
         return false;
@@ -144,7 +166,11 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
     try {
       // Se estiver atualizando a data/hora, verificar disponibilidade
       if (updatedData.date) {
-        const isAvailable = await checkTimeSlotAvailability(updatedData.date, id);
+        // Por enquanto, usar duração padrão de 60 minutos
+        // TODO: Buscar duração real do serviço
+        const serviceDuration = 60;
+        
+        const isAvailable = await checkTimeSlotAvailability(updatedData.date, serviceDuration, id);
         if (!isAvailable) {
           setError('Este horário já está ocupado');
           return false;

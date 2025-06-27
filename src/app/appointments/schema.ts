@@ -3,8 +3,10 @@ import { z } from "zod";
 export const appointmentSchema = z.object({
   clientId: z.string().min(1, "Cliente é obrigatório"),
   petId: z.string().min(1, "Pet é obrigatório"),
-  serviceType: z.string().min(1, "Tipo de serviço é obrigatório"),
-  date: z.string().min(1, "Data é obrigatória"),
+  serviceId: z.string().min(1, "Serviço é obrigatório"),
+  date: z.date({
+    required_error: "Data é obrigatória",
+  }),
   time: z.string().min(1, "Horário é obrigatório"),
   observations: z.string().optional(),
 });

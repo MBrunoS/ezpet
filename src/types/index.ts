@@ -10,10 +10,22 @@ export interface Product {
   updatedAt?: Date;
 }
 
+export interface Service {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  duration: number; // duração em minutos
+  isActive: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
 export interface Appointment {
   id: string;
   clientId: string;
   petId: string;
+  serviceId: string; // Referência ao serviço
   serviceName: string;
   service: string;
   clientName: string;
