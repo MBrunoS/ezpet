@@ -10,12 +10,20 @@ export interface Product {
   updatedAt?: Date;
 }
 
+export interface ServiceExtra {
+  id: string;
+  name: string;
+  price: number;
+  description?: string;
+}
+
 export interface Service {
   id: string;
   name: string;
   description?: string;
   price: number;
   duration: number; // duração em minutos
+  extras: ServiceExtra[];
   isActive: boolean;
   createdAt?: Date;
   updatedAt?: Date;
@@ -32,6 +40,7 @@ export interface Appointment {
   petName: string;
   date: Date;
   price: number;
+  selectedExtras: ServiceExtra[]; // Extras selecionados
   observations?: string;
   status: 'scheduled' | 'completed' | 'canceled';
   createdAt?: Date;

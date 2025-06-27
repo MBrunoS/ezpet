@@ -72,6 +72,25 @@ export function DeleteConfirmationDialog({
               <span>{formatDuration(service.duration)}</span>
             </div>
 
+            {service.extras && service.extras.length > 0 && (
+              <div className="pt-2 border-t">
+                <span className="font-medium">Extras:</span>
+                <div className="mt-2 space-y-1">
+                  {service.extras.map((extra) => (
+                    <div
+                      key={extra.id}
+                      className="flex justify-between items-center text-sm"
+                    >
+                      <span>{extra.name}</span>
+                      <span className="text-green-600">
+                        +{formatPrice(extra.price)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {service.description && (
               <div className="pt-2 border-t">
                 <span className="font-medium">Descrição:</span>

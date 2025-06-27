@@ -33,6 +33,7 @@ import { Switch } from "../../../components/ui/switch";
 import { Settings, DollarSign, Clock } from "lucide-react";
 import { Service } from "../../../types";
 import { serviceSchema, ServiceFormData } from "../schema";
+import { ServiceExtras } from "./ServiceExtras";
 
 interface ServiceFormProps {
   isOpen: boolean;
@@ -56,6 +57,7 @@ export function ServiceForm({
       description: "",
       price: 0,
       duration: 60,
+      extras: [],
       isActive: true,
     },
   });
@@ -68,6 +70,7 @@ export function ServiceForm({
         description: serviceInEdit.description || "",
         price: serviceInEdit.price,
         duration: serviceInEdit.duration,
+        extras: serviceInEdit.extras || [],
         isActive: serviceInEdit.isActive,
       });
     } else if (!serviceInEdit && isOpen) {
@@ -76,6 +79,7 @@ export function ServiceForm({
         description: "",
         price: 0,
         duration: 60,
+        extras: [],
         isActive: true,
       });
     }
@@ -213,7 +217,7 @@ export function ServiceForm({
               control={form.control}
               name="isActive"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <FormItem className="flex flex-row justify-between items-center p-4 rounded-lg border">
                   <div className="space-y-0.5">
                     <FormLabel className="text-base">Serviço Ativo</FormLabel>
                     <div className="text-sm text-gray-500">
@@ -230,6 +234,14 @@ export function ServiceForm({
                 </FormItem>
               )}
             />
+
+            {/* Extras do Serviço */}
+            <div className="space-y-4">
+              <ServiceExtras
+                extras={form.watch("extras")}
+                onExtrasChange={(extras) => form.setValue("extras", extras)}
+              />
+            </div>
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>

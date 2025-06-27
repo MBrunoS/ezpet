@@ -75,6 +75,7 @@ export function AppointmentTable({
             <TableHead>Serviço</TableHead>
             <TableHead>Data</TableHead>
             <TableHead>Horário</TableHead>
+            <TableHead>Preço</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Observações</TableHead>
             <TableHead className="text-right">Ações</TableHead>
@@ -144,6 +145,25 @@ function AppointmentTableRow({
         <div className="flex gap-1 items-center">
           <Clock className="w-4 h-4 text-gray-500" />
           <span>{formatTime(appointment.date)}</span>
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className="space-y-1">
+          <div className="font-medium text-green-600">
+            R$ {appointment.price.toFixed(2)}
+          </div>
+          {appointment.selectedExtras &&
+            appointment.selectedExtras.length > 0 && (
+              <div className="text-xs text-gray-500">
+                <div>Extras:</div>
+                {appointment.selectedExtras.map((extra) => (
+                  <div key={extra.id} className="flex justify-between">
+                    <span>{extra.name}</span>
+                    <span>R$ {extra.price.toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
         </div>
       </TableCell>
       <TableCell>{getStatusBadge(appointment.status)}</TableCell>

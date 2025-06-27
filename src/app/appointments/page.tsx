@@ -55,6 +55,13 @@ export default function AppointmentsPage() {
       return;
     }
 
+    // Calcular preço total incluindo extras
+    const extrasPrice = (data.selectedExtras || []).reduce(
+      (sum, extra) => sum + extra.price,
+      0
+    );
+    const totalPrice = service.price + extrasPrice;
+
     const appointmentData = {
       clientId: data.clientId,
       petId: data.petId,
@@ -64,7 +71,8 @@ export default function AppointmentsPage() {
       clientName: client.name,
       petName: pet.name,
       date: data.date,
-      price: service.price,
+      price: totalPrice,
+      selectedExtras: data.selectedExtras || [],
       observations: data.observations,
       status: "scheduled" as const,
     };

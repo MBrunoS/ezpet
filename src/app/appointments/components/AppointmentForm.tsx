@@ -33,6 +33,8 @@ import { Calendar, Clock, User, PawPrint, DollarSign } from "lucide-react";
 import { Appointment } from "../../../types";
 import { appointmentSchema, AppointmentFormData } from "../schema";
 import { useServices } from "../../../hooks/useServices";
+import { ServiceExtrasSelector } from "./ServiceExtrasSelector";
+import { formatCurrency } from "@/lib/utils";
 
 interface AppointmentFormProps {
   isOpen: boolean;
@@ -65,6 +67,7 @@ export function AppointmentForm({
       petId: "",
       serviceId: "",
       date: new Date(),
+      selectedExtras: [],
       observations: "",
     },
   });
@@ -77,6 +80,7 @@ export function AppointmentForm({
         petId: appointmentInEdit.petId,
         serviceId: appointmentInEdit.serviceId,
         date: appointmentInEdit.date,
+        selectedExtras: appointmentInEdit.selectedExtras || [],
         observations: appointmentInEdit.observations || "",
       });
     } else if (!appointmentInEdit && isOpen) {
@@ -85,6 +89,7 @@ export function AppointmentForm({
         petId: "",
         serviceId: "",
         date: new Date(),
+        selectedExtras: [],
         observations: "",
       });
     }
@@ -142,7 +147,7 @@ export function AppointmentForm({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>
             {appointmentInEdit ? "Editar Agendamento" : "Novo Agendamento"}
@@ -157,7 +162,7 @@ export function AppointmentForm({
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-6"
+            className="overflow-y-auto flex-1 pr-2 space-y-6"
           >
             {/* Cliente */}
             <FormField
@@ -181,7 +186,7 @@ export function AppointmentForm({
                     </FormControl>
                     <SelectContent>
                       {clients.length === 0 ? (
-                        <SelectItem value="" disabled>
+                        <SelectItem value="no-clients" disabled>
                           Nenhum cliente cadastrado
                         </SelectItem>
                       ) : (
@@ -220,11 +225,11 @@ export function AppointmentForm({
                     </FormControl>
                     <SelectContent>
                       {!selectedClientId ? (
-                        <SelectItem value="" disabled>
+                        <SelectItem value="no-client" disabled>
                           Selecione um cliente primeiro
                         </SelectItem>
                       ) : clientPets.length === 0 ? (
-                        <SelectItem value="" disabled>
+                        <SelectItem value="no-pets" disabled>
                           Nenhum pet cadastrado para este cliente
                         </SelectItem>
                       ) : (
@@ -263,11 +268,11 @@ export function AppointmentForm({
                     </FormControl>
                     <SelectContent>
                       {loadingServices ? (
-                        <SelectItem value="" disabled>
+                        <SelectItem value="loading" disabled>
                           Carregando serviços...
                         </SelectItem>
                       ) : services.length === 0 ? (
-                        <SelectItem value="" disabled>
+                        <SelectItem value="no-services" disabled>
                           Nenhum serviço cadastrado
                         </SelectItem>
                       ) : (
@@ -300,10 +305,7 @@ export function AppointmentForm({
                     <Input
                       type="date"
                       {...field}
-                      value={formatDate(field.value)
-                        .split("/")
-                        .reverse()
-                        .join("-")}
+                      value={formatDate(field.value)}
                       onChange={(e) => {
                         const date = new Date(e.target.value);
                         const currentTime = field.value;
@@ -350,7 +352,7 @@ export function AppointmentForm({
                     </FormControl>
                     <SelectContent>
                       {timeSlots.length === 0 ? (
-                        <SelectItem value="" disabled>
+                        <SelectItem value="no-slots" disabled>
                           Nenhum horário disponível
                         </SelectItem>
                       ) : (
@@ -372,9 +374,9 @@ export function AppointmentForm({
 
             {/* Informações do Serviço */}
             {selectedService && (
-              <div className="p-4 bg-gray-50 rounded-lg space-y-2">
-                <h4 className="font-medium text-sm">Informações do Serviço</h4>
-                <div className="text-sm text-gray-600 space-y-1">
+              <div className="p-4 space-y-2 bg-gray-50 rounded-lg">
+                <h4 className="text-sm font-medium">Informações do Serviço</h4>
+                <div className="space-y-1 text-sm text-gray-600">
                   <div>Nome: {selectedService.name}</div>
                   <div>Preço: R$ {selectedService.price.toFixed(2)}</div>
                   <div>Duração: {selectedService.duration} minutos</div>
@@ -384,6 +386,30 @@ export function AppointmentForm({
                 </div>
               </div>
             )}
+
+            {/* Extras do Serviço */}
+            {selectedService &&
+              selectedService.extras &&
+              selectedService.extras.length > 0 && (
+                <FormField
+                  control={form.control}
+                  name="selectedExtras"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Extras Disponíveis</FormLabel>
+                      <FormControl>
+                        <ServiceExtrasSelector
+                          extras={selectedService.extras}
+                          selectedExtras={field.value}
+                          onExtrasChange={field.onChange}
+                          disabled={loading}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
             {/* Observações */}
             <FormField
@@ -404,21 +430,38 @@ export function AppointmentForm({
                 </FormItem>
               )}
             />
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading
-                  ? "Salvando..."
-                  : appointmentInEdit
-                  ? "Atualizar Agendamento"
-                  : "Criar Agendamento"}
-              </Button>
-            </DialogFooter>
           </form>
         </Form>
+
+        <DialogFooter className="gap-3 pt-3 mt-3 border-t sm:flex-col">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium">Total do Agendamento:</span>
+            <span className="text-sm font-medium text-green-600">
+              {formatCurrency(
+                form
+                  .watch("selectedExtras")
+                  .reduce((sum, extra) => sum + extra.price, 0) +
+                  (selectedService?.price || 0)
+              )}
+            </span>
+          </div>
+          <div className="flex flex-col gap-2 justify-end mt-2 sm:flex-row">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              disabled={loading}
+              onClick={form.handleSubmit(handleSubmit)}
+            >
+              {loading
+                ? "Salvando..."
+                : appointmentInEdit
+                ? "Atualizar Agendamento"
+                : "Criar Agendamento"}
+            </Button>
+          </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

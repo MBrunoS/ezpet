@@ -7,7 +7,12 @@ export const appointmentSchema = z.object({
   date: z.date({
     required_error: "Data é obrigatória",
   }),
-  time: z.string().min(1, "Horário é obrigatório"),
+  selectedExtras: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    price: z.number(),
+    description: z.string().optional(),
+  })),
   observations: z.string().optional(),
 });
 

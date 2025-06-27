@@ -70,6 +70,7 @@ export function ServiceTable({
             <TableHead>Serviço</TableHead>
             <TableHead>Preço</TableHead>
             <TableHead>Duração</TableHead>
+            <TableHead>Extras</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
@@ -132,6 +133,24 @@ function ServiceTableRow({
           <Clock className="w-4 h-4 text-blue-600" />
           <span>{formatDuration(service.duration)}</span>
         </div>
+      </TableCell>
+      <TableCell>
+        {service.extras && service.extras.length > 0 ? (
+          <div className="space-y-1">
+            {service.extras.slice(0, 2).map((extra) => (
+              <Badge key={extra.id} variant="outline" className="text-xs">
+                {extra.name} (+{formatPrice(extra.price)})
+              </Badge>
+            ))}
+            {service.extras.length > 2 && (
+              <Badge variant="outline" className="text-xs">
+                +{service.extras.length - 2} mais
+              </Badge>
+            )}
+          </div>
+        ) : (
+          <span className="text-sm text-gray-500">Nenhum extra</span>
+        )}
       </TableCell>
       <TableCell>{getStatusBadge(service.isActive)}</TableCell>
       <TableCell className="text-right">
