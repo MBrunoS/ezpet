@@ -1,10 +1,10 @@
 import React from "react";
 import { formatDateTime, formatCurrency } from "../lib/utils";
-import { Agendamento } from "../types";
+import { Appointment } from "../types";
 
 interface AgendamentoCardProps {
-  agendamento: Agendamento;
-  onEditar: (agendamento: Agendamento) => void;
+  agendamento: Appointment;
+  onEditar: (agendamento: Appointment) => void;
   onExcluir: (id: string) => void;
   onConcluir: (id: string) => void;
 }
@@ -33,7 +33,7 @@ export default function AgendamentoCard({
       <div className="p-4">
         <div className="flex justify-between items-start">
           <h3 className="text-lg font-medium text-gray-900">
-            {agendamento.servicoNome}
+            {agendamento.serviceName}
           </h3>
           <span
             className={`px-2 py-1 text-xs rounded-full ${getStatusStyle()}`}
@@ -51,23 +51,23 @@ export default function AgendamentoCard({
         <div className="mt-2">
           <p className="text-sm text-gray-500">
             <span className="font-medium">Cliente:</span>{" "}
-            {agendamento.clienteNome}
+            {agendamento.clientName}
           </p>
           <p className="text-sm text-gray-500">
-            <span className="font-medium">Pet:</span> {agendamento.petNome}
+            <span className="font-medium">Pet:</span> {agendamento.petName}
           </p>
           <p className="text-sm text-gray-500">
             <span className="font-medium">Data:</span>{" "}
-            {formatDateTime(agendamento.data)}
+            {formatDateTime(agendamento.date)}
           </p>
           <p className="text-sm font-medium text-gray-900 mt-2">
-            {formatCurrency(agendamento.valor)}
+            {formatCurrency(agendamento.price)}
           </p>
         </div>
 
-        {agendamento.observacoes && (
+        {agendamento.observations && (
           <p className="mt-2 text-xs text-gray-500 italic">
-            {agendamento.observacoes}
+            {agendamento.observations}
           </p>
         )}
 

@@ -10,20 +10,20 @@ export interface Product {
   updatedAt?: Date;
 }
 
-export interface Agendamento {
+export interface Appointment {
   id: string;
-  clienteId: string;
+  clientId: string;
   petId: string;
-  servicoNome: string;
-  servico: string;
-  clienteNome: string;
-  petNome: string;
-  data: Date;
-  valor: number;
-  observacoes?: string;
-  status: 'agendado' | 'concluido' | 'cancelado';
-  dataCadastro?: Date;
-  dataAtualizacao?: Date;
+  serviceName: string;
+  service: string;
+  clientName: string;
+  petName: string;
+  date: Date;
+  price: number;
+  observations?: string;
+  status: 'scheduled' | 'completed' | 'canceled';
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface Client {

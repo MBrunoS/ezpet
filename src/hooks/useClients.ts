@@ -8,7 +8,8 @@ import {
   getDocs,
   query,
   where,
-  serverTimestamp 
+  serverTimestamp, 
+  increment
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Client } from '../types';
@@ -113,9 +114,7 @@ export function useClients(): ClientsState & ClientsMethods {
     try {
       const clientRef = doc(db, 'clients', clientId);
       await updateDoc(clientRef, {
-        petsCount: {
-          increment: 1
-        },
+        petsCount: increment(1),
         updatedAt: serverTimestamp()
       });
       await loadClients();
@@ -130,9 +129,7 @@ export function useClients(): ClientsState & ClientsMethods {
     try {
       const clientRef = doc(db, 'clients', clientId);
       await updateDoc(clientRef, {
-        petsCount: {
-          increment: -1
-        },
+        petsCount: increment(-1),
         updatedAt: serverTimestamp()
       });
       await loadClients();

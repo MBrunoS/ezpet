@@ -4,7 +4,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useClients } from "../hooks/useClients";
 import { formatCurrency } from "../lib/utils";
-import { Agendamento, Client, Pet } from "../types";
+import { Appointment, Client, Pet } from "../types";
 
 interface Servico {
   id: string;
@@ -22,8 +22,8 @@ interface AgendamentoFormData {
 }
 
 interface AgendamentoFormProps {
-  agendamento?: Agendamento;
-  onSubmit: (data: Agendamento) => Promise<void>;
+  agendamento?: Appointment;
+  onSubmit: (data: Appointment) => Promise<void>;
   onCancel?: () => void;
 }
 
@@ -41,12 +41,12 @@ export default function AgendamentoForm({
   } = useForm<AgendamentoFormData>({
     defaultValues: agendamento
       ? {
-          clienteId: agendamento.clienteId || "",
+          clienteId: agendamento.clientId || "",
           petId: agendamento.petId || "",
-          servico: agendamento.servico || "",
-          data: agendamento.data || new Date(),
-          valor: agendamento.valor.toString(),
-          observacoes: agendamento.observacoes || "",
+          servico: agendamento.service || "",
+          data: agendamento.date || new Date(),
+          valor: agendamento.price.toString(),
+          observacoes: agendamento.observations || "",
         }
       : {
           clienteId: "",
@@ -61,7 +61,7 @@ export default function AgendamentoForm({
   const { clients: clientes } = useClients();
   const [loading, setLoading] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<Date>(
-    agendamento?.data || new Date()
+    agendamento?.date || new Date()
   );
   const [pets, setPets] = useState<Pet[]>([]);
 
@@ -112,13 +112,13 @@ export default function AgendamentoForm({
       );
       const servicoSelecionado = servicos.find((s) => s.id === data.servico);
 
-      const agendamentoCompleto: Agendamento = {
+      const agendamentoCompleto: Appointment = {
         ...data,
         id: agendamento?.id || "",
-        valor: parseFloat(data.valor),
-        clienteNome: clienteSelecionado?.name || "",
-        petNome: petSelecionado?.nome || "",
-        servicoNome: servicoSelecionado?.nome || "",
+        price: parseFloat(data.valor),
+        clientName: clienteSelecionado?.name || "",
+        petName: petSelecionado?.nome || "",
+        serviceName: servicoSelecionado?.nome || "",
         status: agendamento?.status || "agendado",
       };
 

@@ -3,15 +3,15 @@ import React, { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { FaBell, FaSignOutAlt } from "react-icons/fa";
 import { useStock } from "../hooks/useStock";
-import { useAgendamentos } from "../hooks/useAgendamentos";
+import { useAppointments } from "../hooks/useAppointments";
 import NotificacaoItem from "./NotificacaoItem";
-import { Product, Agendamento } from "../types";
+import { Product, Appointment } from "../types";
 import { SidebarTrigger } from "./ui/sidebar";
 
 export default function Navbar(): React.ReactElement {
   const { user, signOut } = useAuth();
   const { lowStockProducts } = useStock();
-  const { agendamentosHoje } = useAgendamentos();
+  const { appointmentsToday: agendamentosHoje } = useAppointments();
   const [showNotifications, setShowNotifications] = useState<boolean>(false);
 
   const totalNotifications = lowStockProducts.length + agendamentosHoje.length;
@@ -64,13 +64,13 @@ export default function Navbar(): React.ReactElement {
                     />
                   ))}
 
-                  {agendamentosHoje.map((agendamento: Agendamento) => (
+                  {agendamentosHoje.map((agendamento: Appointment) => (
                     <NotificacaoItem
                       key={`agendamento-${agendamento.id}`}
                       tipo="agendamento"
-                      titulo={`Agendamento hoje: ${agendamento.servico}`}
-                      descricao={`Cliente: ${agendamento.clienteNome} - Pet: ${agendamento.petNome}`}
-                      link={`/agendamentos`}
+                      titulo={`Agendamento hoje: ${agendamento.service}`}
+                      descricao={`Cliente: ${agendamento.clientName} - Pet: ${agendamento.petName}`}
+                      link={`/appointments`}
                     />
                   ))}
                 </div>
