@@ -6,6 +6,8 @@ import {
   deleteDoc, 
   doc, 
   getDocs,
+  query,
+  where,
   serverTimestamp 
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -86,6 +88,18 @@ export function useClients(): ClientsState & ClientsMethods {
 
   const removeClient = async (id: string): Promise<boolean> => {
     try {
+      // Primeiro, buscar e remover todos os pets associados ao cliente
+      const petsRef = collection(db, 'pets');
+      const petsQuery = query(petsRef, where('clientId', '==', id));
+      const petsSnapshot = await getDocs(petsQuery);
+      
+      // Remover todos os pets em lote
+      const deletePetsPromises = petsSnapshot.docs.map(petDoc => 
+        deleteDoc(doc(db, 'pets', petDoc.id))
+      );
+      await Promise.all(deletePetsPromises);
+      
+      // Depois remover o cliente
       await deleteDoc(doc(db, 'clients', id));
       await loadClients();
       return true;
