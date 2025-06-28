@@ -1,3 +1,13 @@
+interface Address {
+  street: string;
+  number: string;
+  complement?: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+  zipCode: string;
+}
+
 export interface Product {
   id: string;
   userId: string;
@@ -85,4 +95,25 @@ export interface User {
   nome: string;
   email: string;
   role: 'admin' | 'user';
+}
+
+export interface WorkingHours {
+  day: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+  isOpen: boolean;
+  openTime: string; // formato HH:mm
+  closeTime: string; // formato HH:mm
+}
+
+export interface PetShopProfile {
+  id: string;
+  userId: string;
+  name: string;
+  phone: string;
+  address: Address;
+  workingHours: WorkingHours[];
+  lunchStart?: string; // formato HH:mm (opcional)
+  lunchEnd?: string; // formato HH:mm (opcional)
+  appointmentCapacity: number; // número de pets por horário
+  createdAt?: Date;
+  updatedAt?: Date;
 } 

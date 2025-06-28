@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { FaBell, FaSignOutAlt, FaChevronDown } from "react-icons/fa";
+import { FaBell, FaSignOutAlt, FaChevronDown, FaUser } from "react-icons/fa";
 import { SidebarTrigger } from "./ui/sidebar";
 import {
   DropdownMenu,
@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import Link from "next/link";
 
 export default function Navbar(): React.ReactElement {
   const { user, logout } = useAuth();
@@ -134,6 +135,12 @@ export default function Navbar(): React.ReactElement {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <Link href="/profile">
+                <DropdownMenuItem>
+                  <FaUser className="mr-2 w-4 h-4" />
+                  <span>Perfil</span>
+                </DropdownMenuItem>
+              </Link>
               <DropdownMenuItem onClick={handleLogout}>
                 <FaSignOutAlt className="mr-2 w-4 h-4" />
                 <span>Sair</span>

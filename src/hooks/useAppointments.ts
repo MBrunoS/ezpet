@@ -15,6 +15,7 @@ import { db } from '../lib/firebase';
 import { Appointment, Service } from '../types';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { useServices } from './useServices';
 
 interface AppointmentsState {
   appointments: Appointment[];
@@ -27,12 +28,15 @@ interface AppointmentsMethods {
   updateAppointment: (id: string, updatedData: Partial<Appointment>) => Promise<boolean>;
   removeAppointment: (id: string) => Promise<boolean>;
   loadAppointments: () => Promise<void>;
-  checkTimeSlotAvailability: (date: Date, serviceDuration: number, excludeId?: string) => Promise<boolean>;
+  checkTimeSlotAvailability: (date: Date, serviceDuration: number, excludeId?: string) => Promise<boolean | null>;
   getAppointmentsByDate: (date: Date) => Promise<Appointment[]>;
 }
 
+const DEFAULT_SERVICE_DURATION = 30;
+
 export function useAppointments(): AppointmentsState & AppointmentsMethods {
   const { user } = useAuth();
+  const { services } = useServices();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -67,7 +71,7 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
     date: Date, 
     serviceDuration: number,
     excludeId?: string
-  ): Promise<boolean> => {
+  ): Promise<boolean | null> => {
     if (!user) return false;
     
     try {
@@ -86,8 +90,6 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
       );
 
       const snapshot = await getDocs(q);
-
-      console.log("snapshot", snapshot);
       
       // Se não há agendamentos na data, permitir
       if (snapshot.empty) {
@@ -99,9 +101,8 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
         const appointmentDate = appointment.date.toDate();
         
         // Buscar a duração do serviço do agendamento existente
-        // Por enquanto, usar duração padrão de 60 minutos
-        // TODO: Implementar busca da duração real do serviço
-        const existingServiceDuration = 60;
+        const existingService = services.find((s) => s.id === appointment.serviceId);
+        const existingServiceDuration = existingService?.duration || DEFAULT_SERVICE_DURATION;
         
         const existingStart = appointmentDate.getTime();
         const existingEnd = existingStart + (existingServiceDuration * 60 * 1000);
@@ -119,7 +120,7 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
       return appointmentsWithConflict.length === 0;
     } catch (err) {
       console.error('Erro ao verificar disponibilidade:', err);
-      return false;
+      return null;
     }
   }, [user]);
 
@@ -159,14 +160,17 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
     if (!user) return false;
     
     try {
-      // Por enquanto, usar duração padrão de 60 minutos
-      // TODO: Buscar duração real do serviço
-      const serviceDuration = 60;
+      const service = services.find((s) => s.id === appointment.serviceId);
+      const serviceDuration = service?.duration || DEFAULT_SERVICE_DURATION;
       
       // Verificar se o horário está disponível
       const isAvailable = await checkTimeSlotAvailability(appointment.date, serviceDuration);
       if (!isAvailable) {
-        toast.error('Este horário já está ocupado');
+        if (isAvailable === null) {
+          toast.error('Erro ao verificar disponibilidade');
+        } else {
+          toast.error('Este horário já está ocupado');
+        }
         return false;
       }
 

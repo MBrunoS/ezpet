@@ -33,6 +33,7 @@ import { Calendar, Clock, User, PawPrint, DollarSign } from "lucide-react";
 import { Appointment } from "@/types";
 import { appointmentSchema, AppointmentFormData } from "../schema";
 import { useServices } from "@/hooks/useServices";
+import { useAvailableTimeSlots } from "@/hooks/useAvailableTimeSlots";
 import { ServiceExtrasSelector } from "./ServiceExtrasSelector";
 import { formatCurrency } from "@/lib/utils";
 
@@ -70,6 +71,22 @@ export function AppointmentForm({
     },
   });
 
+  const selectedDate = form.watch("date");
+  const selectedServiceId = form.watch("serviceId");
+  const selectedService =
+    services.find((service) => service.id === selectedServiceId) || null;
+
+  // Usar o hook para calcular horários disponíveis
+  const {
+    availableTimeSlots,
+    loading: loadingTimeSlots,
+    formatTime,
+    isWorkingDay,
+  } = useAvailableTimeSlots({
+    selectedDate,
+    selectedService,
+  });
+
   // Preencher formulário quando estiver editando
   useEffect(() => {
     if (appointmentInEdit && isOpen) {
@@ -103,46 +120,18 @@ export function AppointmentForm({
   };
 
   const selectedClientId = form.watch("clientId");
-  const selectedServiceId = form.watch("serviceId");
 
   // Filtrar pets do cliente selecionado
   const clientPets = pets.filter((pet) => pet.clientId === selectedClientId);
 
-  // Buscar informações do serviço selecionado
-  const selectedService = services.find(
-    (service) => service.id === selectedServiceId
-  );
-
-  // Gerar horários disponíveis (8h às 18h, intervalos de 30 minutos)
-  const generateTimeSlots = () => {
-    const slots = [];
-    const startHour = 8;
-    const endHour = 18;
-
-    for (let hour = startHour; hour < endHour; hour++) {
-      for (let minute = 0; minute < 60; minute += 30) {
-        const time = new Date();
-        time.setHours(hour, minute, 0, 0);
-        slots.push(time);
-      }
-    }
-
-    return slots;
-  };
-
-  const timeSlots = generateTimeSlots();
-
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString("pt-BR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
   const formatDateForInput = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
+    // Ajustar para timezone local para evitar problemas de UTC
+    const localDate = new Date(
+      date.getTime() - date.getTimezoneOffset() * 60000
+    );
+    const year = localDate.getFullYear();
+    const month = String(localDate.getMonth() + 1).padStart(2, "0");
+    const day = String(localDate.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
 
@@ -308,13 +297,21 @@ export function AppointmentForm({
                       {...field}
                       value={formatDateForInput(field.value)}
                       onChange={(e) => {
-                        const date = new Date(e.target.value);
+                        // Criar a data considerando o timezone local
+                        const [year, month, day] = e.target.value
+                          .split("-")
+                          .map(Number);
+                        const newDate = new Date(year, month - 1, day);
+
+                        // Manter o horário atual
                         const currentTime = field.value;
-                        date.setHours(
+                        newDate.setHours(
                           currentTime.getHours(),
-                          currentTime.getMinutes()
+                          currentTime.getMinutes(),
+                          0,
+                          0
                         );
-                        field.onChange(date);
+                        field.onChange(newDate);
                       }}
                       disabled={loading}
                     />
@@ -344,7 +341,12 @@ export function AppointmentForm({
                       newDate.setHours(hours, minutes, 0, 0);
                       field.onChange(newDate);
                     }}
-                    disabled={loading}
+                    disabled={
+                      loading ||
+                      loadingTimeSlots ||
+                      !selectedService ||
+                      !isWorkingDay
+                    }
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -352,22 +354,58 @@ export function AppointmentForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {timeSlots.length === 0 ? (
+                      {!isWorkingDay ? (
+                        <SelectItem value="closed" disabled>
+                          Pet shop fechado neste dia
+                        </SelectItem>
+                      ) : !selectedService ? (
+                        <SelectItem value="no-service" disabled>
+                          Selecione um serviço primeiro
+                        </SelectItem>
+                      ) : loadingTimeSlots ? (
+                        <SelectItem value="loading" disabled>
+                          Carregando horários disponíveis...
+                        </SelectItem>
+                      ) : availableTimeSlots.length === 0 ? (
                         <SelectItem value="no-slots" disabled>
                           Nenhum horário disponível
                         </SelectItem>
                       ) : (
-                        timeSlots.map((time) => (
+                        availableTimeSlots.map((slot) => (
                           <SelectItem
-                            key={time.getTime()}
-                            value={formatTime(time)}
+                            key={slot.time.getTime()}
+                            value={formatTime(slot.time)}
                           >
-                            {formatTime(time)}
+                            {formatTime(slot.time)}
                           </SelectItem>
                         ))
                       )}
                     </SelectContent>
                   </Select>
+                  {/* Mensagem informativa */}
+                  {!isWorkingDay && (
+                    <p className="text-sm text-orange-600">
+                      Pet shop fechado neste dia
+                    </p>
+                  )}
+                  {isWorkingDay && !selectedService && (
+                    <p className="text-sm text-blue-600">
+                      Selecione um serviço para ver os horários disponíveis
+                    </p>
+                  )}
+                  {isWorkingDay && selectedService && loadingTimeSlots && (
+                    <p className="text-sm text-gray-600">
+                      Carregando horários disponíveis...
+                    </p>
+                  )}
+                  {isWorkingDay &&
+                    selectedService &&
+                    !loadingTimeSlots &&
+                    availableTimeSlots.length === 0 && (
+                      <p className="text-sm text-red-600">
+                        Nenhum horário disponível para este serviço
+                      </p>
+                    )}
                   <FormMessage />
                 </FormItem>
               )}
