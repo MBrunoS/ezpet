@@ -1,14 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import {
   useAppointments,
   useAddAppointment,
-  useUpdateAppointment,
-  useDeleteAppointment,
 } from "@/hooks/queries/useAppointmentsQuery";
-import { useClients } from "@/hooks/queries/useClientsQuery";
 import { usePets } from "@/hooks/queries/usePetsQuery";
+import { useClients } from "@/hooks/queries/useClientsQuery";
 import { useServices } from "@/hooks/queries/useServicesQuery";
 import { Appointment } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -18,25 +16,39 @@ import { AppointmentTable } from "./components/AppointmentTable";
 import { DeleteConfirmationDialog } from "./components/DeleteConfirmationDialog";
 import { AppointmentFormData } from "./schema";
 import { toast } from "sonner";
+import { useAppointmentActions } from "@/hooks/useAppointmentActions";
 
 export default function AppointmentsPage() {
   const { data: appointments, isLoading: loadingAppointments } =
     useAppointments();
   const addAppointmentMutation = useAddAppointment();
-  const updateAppointmentMutation = useUpdateAppointment();
-  const deleteAppointmentMutation = useDeleteAppointment();
 
-  const { data: clients, isLoading: loadingClients } = useClients();
   const { data: pets, isLoading: loadingPets } = usePets();
+  const { data: clients, isLoading: loadingClients } = useClients();
   const { data: services, isLoading: loadingServices } = useServices();
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [appointmentInEdit, setAppointmentInEdit] =
-    useState<Appointment | null>(null);
-  const [appointmentToDelete, setAppointmentToDelete] =
-    useState<Appointment | null>(null);
+  const {
+    selectedAppointment,
+    isDetailsDialogOpen,
+    isFormDialogOpen,
+    appointmentToDelete,
+    setAppointmentToDelete,
+    handleAppointmentClick,
+    handleEditAppointment,
+    handleDeleteAppointment,
+    handleFormSubmit,
+    handleConfirmDelete,
+    closeDetailsDialog,
+    closeFormDialog,
+    openNewForm,
+    closeNewForm,
+  } = useAppointmentActions({
+    clients,
+    pets,
+    services,
+  });
 
-  const handleSubmit = async (data: AppointmentFormData) => {
+  const handleCreateAppointment = async (data: AppointmentFormData) => {
     // Buscar informações do cliente, pet e serviço
     const client = clients?.find((c) => c.id === data.clientId);
     const pet = pets?.find((p) => p.id === data.petId);
@@ -58,10 +70,6 @@ export default function AppointmentsPage() {
       clientId: data.clientId,
       petId: data.petId,
       serviceId: data.serviceId,
-      serviceName: service.name,
-      service: service.name, // Mantendo compatibilidade
-      clientName: client.name,
-      petName: pet.name,
       date: data.date,
       price: totalPrice,
       selectedExtras: data.selectedExtras || [],
@@ -69,55 +77,20 @@ export default function AppointmentsPage() {
       status: "scheduled" as const,
     };
 
-    if (appointmentInEdit) {
-      updateAppointmentMutation.mutate(
-        { id: appointmentInEdit.id, data: appointmentData },
-        {
-          onSuccess: () => {
-            toast.success("Agendamento atualizado com sucesso!");
-            setIsDialogOpen(false);
-            setAppointmentInEdit(null);
-          },
-        }
-      );
-    } else {
-      addAppointmentMutation.mutate(appointmentData, {
-        onSuccess: () => {
-          toast.success("Agendamento cadastrado com sucesso!");
-          setIsDialogOpen(false);
-        },
-      });
-    }
+    addAppointmentMutation.mutate(appointmentData, {
+      onSuccess: () => {
+        toast.success("Agendamento cadastrado com sucesso!");
+        closeNewForm();
+      },
+    });
   };
 
   const handleEdit = (appointment: Appointment) => {
-    setAppointmentInEdit(appointment);
-    setIsDialogOpen(true);
-  };
-
-  const handleDelete = () => {
-    if (appointmentToDelete) {
-      deleteAppointmentMutation.mutate(appointmentToDelete.id, {
-        onSuccess: () => {
-          toast.success("Agendamento excluído com sucesso!");
-          setAppointmentToDelete(null);
-        },
-      });
-    }
-  };
-
-  const openNewDialog = () => {
-    setAppointmentInEdit(null);
-    setIsDialogOpen(true);
-  };
-
-  const closeDialog = () => {
-    setIsDialogOpen(false);
-    setAppointmentInEdit(null);
+    handleEditAppointment(appointment);
   };
 
   const loading =
-    loadingAppointments || loadingClients || loadingPets || loadingServices;
+    loadingAppointments || loadingPets || loadingClients || loadingServices;
 
   if (loading) {
     return (
@@ -134,7 +107,7 @@ export default function AppointmentsPage() {
           <h1 className="text-3xl font-bold text-gray-900">Agendamentos</h1>
           <p className="text-gray-600">Gerencie os agendamentos de serviços</p>
         </div>
-        <Button onClick={openNewDialog} className="flex gap-2 items-center">
+        <Button onClick={openNewForm} className="flex gap-2 items-center">
           <Plus className="w-4 h-4" />
           Novo Agendamento
         </Button>
@@ -152,16 +125,28 @@ export default function AppointmentsPage() {
           <AppointmentTable
             appointments={appointments || []}
             onEdit={handleEdit}
-            onDelete={setAppointmentToDelete}
+            onDelete={handleDeleteAppointment}
           />
         </div>
       </div>
 
+      {/* Form for creating new appointments */}
       <AppointmentForm
-        isOpen={isDialogOpen}
-        onClose={closeDialog}
-        onSubmit={handleSubmit}
-        appointmentInEdit={appointmentInEdit}
+        isOpen={isFormDialogOpen && !selectedAppointment}
+        onClose={closeNewForm}
+        onSubmit={handleCreateAppointment}
+        appointmentInEdit={null}
+        clients={clients || []}
+        pets={pets || []}
+        loadingPets={loadingPets}
+      />
+
+      {/* Form for editing existing appointments */}
+      <AppointmentForm
+        isOpen={isFormDialogOpen && !!selectedAppointment}
+        onClose={closeFormDialog}
+        onSubmit={handleFormSubmit}
+        appointmentInEdit={selectedAppointment}
         clients={clients || []}
         pets={pets || []}
         loadingPets={loadingPets}
@@ -169,7 +154,7 @@ export default function AppointmentsPage() {
 
       <DeleteConfirmationDialog
         appointment={appointmentToDelete}
-        onConfirm={handleDelete}
+        onConfirm={handleConfirmDelete}
         onCancel={() => setAppointmentToDelete(null)}
       />
     </div>

@@ -30,7 +30,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar, Clock, User, PawPrint, DollarSign } from "lucide-react";
-import { Appointment } from "@/types";
+import { Appointment, Client, Pet } from "@/types";
 import { appointmentSchema, AppointmentFormData } from "../schema";
 import { useServices } from "@/hooks/queries/useServicesQuery";
 import { useAvailableTimeSlots } from "@/hooks/useAvailableTimeSlots";
@@ -42,8 +42,8 @@ interface AppointmentFormProps {
   onClose: () => void;
   onSubmit: (data: AppointmentFormData) => Promise<void>;
   appointmentInEdit: Appointment | null;
-  clients: any[];
-  pets: any[];
+  clients: Client[];
+  pets: Pet[];
   loadingPets: boolean;
 }
 
@@ -85,6 +85,7 @@ export function AppointmentForm({
   } = useAvailableTimeSlots({
     selectedDate,
     selectedService,
+    excludeId: appointmentInEdit?.id,
   });
 
   // Preencher formulário quando estiver editando

@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Trash2, Calendar, Clock, Users, PawPrint } from "lucide-react";
 import { Appointment } from "@/types";
+import { useAppointmentsDetails } from "@/hooks/useAppointmentDetails";
 
 interface AppointmentTableProps {
   appointments: Appointment[];
@@ -25,6 +26,9 @@ export function AppointmentTable({
   onEdit,
   onDelete,
 }: AppointmentTableProps) {
+  const { appointmentsWithDetails, isLoading } =
+    useAppointmentsDetails(appointments);
+
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat("pt-BR", {
       day: "2-digit",
@@ -65,6 +69,14 @@ export function AppointmentTable({
     );
   }
 
+  if (isLoading) {
+    return (
+      <div className="py-8 text-center">
+        <div className="text-lg">Carregando agendamentos...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -82,17 +94,22 @@ export function AppointmentTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {appointments.map((appointment) => (
-            <AppointmentTableRow
-              key={appointment.id}
-              appointment={appointment}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              formatDate={formatDate}
-              formatTime={formatTime}
-              getStatusBadge={getStatusBadge}
-            />
-          ))}
+          {appointmentsWithDetails.map(
+            ({ appointment, client, pet, service }) => (
+              <AppointmentTableRow
+                key={appointment.id}
+                appointment={appointment}
+                client={client}
+                pet={pet}
+                service={service}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                formatDate={formatDate}
+                formatTime={formatTime}
+                getStatusBadge={getStatusBadge}
+              />
+            )
+          )}
         </TableBody>
       </Table>
     </div>
@@ -101,6 +118,9 @@ export function AppointmentTable({
 
 interface AppointmentTableRowProps {
   appointment: Appointment;
+  client: any;
+  pet: any;
+  service: any;
   onEdit: (appointment: Appointment) => void;
   onDelete: (appointment: Appointment) => void;
   formatDate: (date: Date) => string;
@@ -110,6 +130,9 @@ interface AppointmentTableRowProps {
 
 function AppointmentTableRow({
   appointment,
+  client,
+  pet,
+  service,
   onEdit,
   onDelete,
   formatDate,
@@ -122,18 +145,24 @@ function AppointmentTableRow({
         <div className="flex gap-2 items-center">
           <Users className="w-4 h-4 text-blue-600" />
           <div>
-            <div className="font-medium">{appointment.clientName}</div>
+            <div className="font-medium">
+              {client?.name || "Cliente não encontrado"}
+            </div>
           </div>
         </div>
       </TableCell>
       <TableCell>
         <div className="flex gap-2 items-center">
           <PawPrint className="w-4 h-4 text-green-600" />
-          <span className="font-medium">{appointment.petName}</span>
+          <span className="font-medium">
+            {pet?.name || "Pet não encontrado"}
+          </span>
         </div>
       </TableCell>
       <TableCell>
-        <span className="font-medium">{appointment.serviceName}</span>
+        <span className="font-medium">
+          {service?.name || "Serviço não encontrado"}
+        </span>
       </TableCell>
       <TableCell>
         <div className="flex gap-1 items-center">
@@ -168,16 +197,12 @@ function AppointmentTableRow({
       </TableCell>
       <TableCell>{getStatusBadge(appointment.status)}</TableCell>
       <TableCell>
-        {appointment.observations ? (
-          <div className="max-w-xs text-sm text-gray-600 truncate">
-            {appointment.observations}
-          </div>
-        ) : (
-          <span className="text-sm text-gray-400">-</span>
-        )}
+        <span className="text-sm text-gray-600">
+          {appointment.observations || "-"}
+        </span>
       </TableCell>
       <TableCell className="text-right">
-        <div className="flex gap-2 justify-end items-center">
+        <div className="flex gap-2 justify-end">
           <Button
             variant="outline"
             size="sm"
@@ -189,7 +214,6 @@ function AppointmentTableRow({
             variant="outline"
             size="sm"
             onClick={() => onDelete(appointment)}
-            className="text-red-600 hover:text-red-700"
           >
             <Trash2 className="w-4 h-4" />
           </Button>

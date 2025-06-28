@@ -134,7 +134,7 @@ export function ServiceForm({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>
               {serviceInEdit ? "Editar Serviço" : "Novo Serviço"}
@@ -149,7 +149,7 @@ export function ServiceForm({
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(handleSubmit)}
-              className="space-y-6"
+              className="overflow-y-auto flex-1 pr-2 space-y-6"
             >
               {/* Nome do Serviço */}
               <FormField
@@ -282,21 +282,27 @@ export function ServiceForm({
                   onEditExtra={handleEditExtra}
                 />
               </div>
-
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={onClose}>
-                  Cancelar
-                </Button>
-                <Button type="submit" disabled={loading}>
-                  {loading
-                    ? "Salvando..."
-                    : serviceInEdit
-                    ? "Atualizar Serviço"
-                    : "Criar Serviço"}
-                </Button>
-              </DialogFooter>
             </form>
           </Form>
+
+          <DialogFooter className="gap-3 pt-3 mt-3 border-t">
+            <div className="flex flex-col gap-2 justify-end mt-2 sm:flex-row">
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                onClick={form.handleSubmit(handleSubmit)}
+                disabled={loading}
+              >
+                {loading
+                  ? "Salvando..."
+                  : serviceInEdit
+                  ? "Atualizar Serviço"
+                  : "Criar Serviço"}
+              </Button>
+            </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

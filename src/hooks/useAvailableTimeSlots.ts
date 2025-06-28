@@ -7,6 +7,7 @@ import { Service } from '@/types';
 interface UseAvailableTimeSlotsProps {
   selectedDate: Date;
   selectedService: Service | null;
+  excludeId?: string; // ID do agendamento a ser excluído da verificação (para edição)
 }
 
 interface TimeSlot {
@@ -15,7 +16,11 @@ interface TimeSlot {
   reason?: string;
 }
 
-export function useAvailableTimeSlots({ selectedDate, selectedService }: UseAvailableTimeSlotsProps) {
+export function useAvailableTimeSlots({ 
+  selectedDate, 
+  selectedService, 
+  excludeId 
+}: UseAvailableTimeSlotsProps) {
   const { data: profile } = usePetShopProfile();
   const { data: appointments } = useAppointments();
   const { data: services } = useServices();
@@ -54,6 +59,12 @@ export function useAvailableTimeSlots({ selectedDate, selectedService }: UseAvai
     }) || [];
 
     return dayAppointments.some(appointment => {
+      // Pular o agendamento que está sendo editado
+      // Isso permite que o usuário mantenha o mesmo horário ao editar
+      if (excludeId && appointment.id === excludeId) {
+        return false;
+      }
+
       const appointmentStart = new Date(appointment.date);
       // Buscar o serviço pelo serviceId para obter a duração
       const service = services?.find(s => s.id === appointment.serviceId);
@@ -76,6 +87,11 @@ export function useAvailableTimeSlots({ selectedDate, selectedService }: UseAvai
 
     // Contar agendamentos que realmente se sobrepõem com o horário proposto
     const overlappingAppointments = dayAppointments.filter(appointment => {
+      // Pular o agendamento que está sendo editado
+      if (excludeId && appointment.id === excludeId) {
+        return false;
+      }
+
       const appointmentStart = new Date(appointment.date);
       const service = services?.find(s => s.id === appointment.serviceId);
       const appointmentDuration = service?.duration || 60;

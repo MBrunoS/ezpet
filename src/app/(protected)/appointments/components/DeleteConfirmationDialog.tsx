@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Calendar, Clock, Users, PawPrint } from "lucide-react";
 import { Appointment } from "@/types";
+import { useAppointmentDetails } from "@/hooks/useAppointmentDetails";
 
 interface DeleteConfirmationDialogProps {
   appointment: Appointment | null;
@@ -24,6 +25,9 @@ export function DeleteConfirmationDialog({
   onConfirm,
   onCancel,
 }: DeleteConfirmationDialogProps) {
+  const { client, pet, service, isLoading } =
+    useAppointmentDetails(appointment);
+
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat("pt-BR", {
       day: "2-digit",
@@ -38,6 +42,20 @@ export function DeleteConfirmationDialog({
       minute: "2-digit",
     }).format(date);
   };
+
+  if (!appointment) return null;
+
+  if (isLoading) {
+    return (
+      <Dialog open={!!appointment} onOpenChange={onCancel}>
+        <DialogContent>
+          <div className="flex justify-center items-center py-8">
+            <div className="text-lg">Carregando detalhes...</div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={!!appointment} onOpenChange={onCancel}>
@@ -55,18 +73,18 @@ export function DeleteConfirmationDialog({
             <div className="flex gap-2 items-center">
               <Users className="w-4 h-4 text-blue-600" />
               <span className="font-medium">Cliente:</span>
-              <span>{appointment.clientName}</span>
+              <span>{client?.name || "Cliente não encontrado"}</span>
             </div>
 
             <div className="flex gap-2 items-center">
               <PawPrint className="w-4 h-4 text-green-600" />
               <span className="font-medium">Pet:</span>
-              <span>{appointment.petName}</span>
+              <span>{pet?.name || "Pet não encontrado"}</span>
             </div>
 
             <div className="flex gap-2 items-center">
               <span className="font-medium">Serviço:</span>
-              <span>{appointment.serviceName}</span>
+              <span>{service?.name || "Serviço não encontrado"}</span>
             </div>
 
             <div className="flex gap-2 items-center">

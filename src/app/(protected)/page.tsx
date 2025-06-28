@@ -1,18 +1,49 @@
 "use client";
 
+import { useState } from "react";
 import { useClients } from "@/hooks/queries/useClientsQuery";
 import { useAppointments } from "@/hooks/queries/useAppointmentsQuery";
 import { useLowStockProducts } from "@/hooks/queries/useStockQuery";
+import { usePets } from "@/hooks/queries/usePetsQuery";
+import { useServices } from "@/hooks/queries/useServicesQuery";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { AppointmentDetailsDialog } from "@/components/ui/appointment-details-dialog";
+import { AppointmentForm } from "@/app/(protected)/appointments/components/AppointmentForm";
+import { DeleteConfirmationDialog } from "@/app/(protected)/appointments/components/DeleteConfirmationDialog";
+import { useAppointmentActions } from "@/hooks/useAppointmentActions";
 
 export default function Home() {
+  const [currentDate, setCurrentDate] = useState(new Date());
+
   const { data: clients, isLoading: clientsLoading } = useClients();
   const { data: appointments, isLoading: appointmentsLoading } =
     useAppointments();
+  const { data: pets, isLoading: petsLoading } = usePets();
+  const { data: services, isLoading: servicesLoading } = useServices();
   const { data: lowStockProducts, isLoading: stockLoading } =
     useLowStockProducts();
+
+  const {
+    selectedAppointment,
+    isDetailsDialogOpen,
+    isFormDialogOpen,
+    appointmentToDelete,
+    setAppointmentToDelete,
+    handleAppointmentClick,
+    handleEditAppointment,
+    handleDeleteAppointment,
+    handleFormSubmit,
+    handleConfirmDelete,
+    closeDetailsDialog,
+    closeFormDialog,
+  } = useAppointmentActions({
+    clients,
+    pets,
+    services,
+  });
 
   // Filtrar agendamentos futuros
   const upcomingAppointments =
@@ -24,7 +55,12 @@ export default function Home() {
       })
       .slice(0, 5) || [];
 
-  const isLoading = clientsLoading || appointmentsLoading || stockLoading;
+  const isLoading =
+    clientsLoading ||
+    appointmentsLoading ||
+    stockLoading ||
+    petsLoading ||
+    servicesLoading;
 
   if (isLoading) {
     return (
@@ -86,65 +122,17 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Upcoming Schedules Table */}
+      {/* Calendar View */}
       <h2 className="text-text text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">
-        Próximos Agendamentos
+        Calendário de Agendamentos
       </h2>
       <div className="px-4 py-3">
-        <div className="flex overflow-hidden rounded-lg border border-border bg-background">
-          {upcomingAppointments.length === 0 ? (
-            <div className="flex-1 p-8 text-center text-text-secondary">
-              <p>Nenhum agendamento futuro</p>
-            </div>
-          ) : (
-            <table className="flex-1">
-              <thead>
-                <tr className="bg-background">
-                  <th className="px-4 py-3 text-left text-text w-[400px] text-sm font-medium leading-normal">
-                    Cliente
-                  </th>
-                  <th className="px-4 py-3 text-left text-text w-[400px] text-sm font-medium leading-normal">
-                    Pet
-                  </th>
-                  <th className="px-4 py-3 text-left text-text w-[400px] text-sm font-medium leading-normal">
-                    Serviço
-                  </th>
-                  <th className="px-4 py-3 text-left text-text w-[400px] text-sm font-medium leading-normal">
-                    Data
-                  </th>
-                  <th className="px-4 py-3 text-left text-text w-[400px] text-sm font-medium leading-normal">
-                    Horário
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {upcomingAppointments.map((appointment) => (
-                  <tr key={appointment.id} className="border-t border-t-border">
-                    <td className="h-[72px] px-4 py-2 w-[400px] text-text text-sm font-normal leading-normal">
-                      {appointment.clientName || "Cliente não encontrado"}
-                    </td>
-                    <td className="h-[72px] px-4 py-2 w-[400px] text-text-secondary text-sm font-normal leading-normal">
-                      {appointment.petName || "Pet não encontrado"}
-                    </td>
-                    <td className="h-[72px] px-4 py-2 w-[400px] text-text-secondary text-sm font-normal leading-normal">
-                      {appointment.serviceName || "Serviço não encontrado"}
-                    </td>
-                    <td className="h-[72px] px-4 py-2 w-[400px] text-text-secondary text-sm font-normal leading-normal">
-                      {format(new Date(appointment.date), "dd/MM/yyyy", {
-                        locale: ptBR,
-                      })}
-                    </td>
-                    <td className="h-[72px] px-4 py-2 w-[400px] text-text-secondary text-sm font-normal leading-normal">
-                      {format(new Date(appointment.date), "HH:mm", {
-                        locale: ptBR,
-                      })}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+        <Calendar
+          appointments={appointments || []}
+          currentDate={currentDate}
+          onDateChange={setCurrentDate}
+          onAppointmentClick={handleAppointmentClick}
+        />
       </div>
 
       {/* Finance Overview */}
@@ -169,6 +157,31 @@ export default function Home() {
           </p>
         </div>
       </div>
+
+      {/* Dialogs */}
+      <AppointmentDetailsDialog
+        appointment={selectedAppointment}
+        isOpen={isDetailsDialogOpen}
+        onClose={closeDetailsDialog}
+        onEdit={handleEditAppointment}
+        onDelete={handleDeleteAppointment}
+      />
+
+      <AppointmentForm
+        isOpen={isFormDialogOpen}
+        onClose={closeFormDialog}
+        onSubmit={handleFormSubmit}
+        appointmentInEdit={selectedAppointment}
+        clients={clients || []}
+        pets={pets || []}
+        loadingPets={petsLoading}
+      />
+
+      <DeleteConfirmationDialog
+        appointment={appointmentToDelete}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setAppointmentToDelete(null)}
+      />
     </div>
   );
 }

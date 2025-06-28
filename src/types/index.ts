@@ -47,10 +47,6 @@ export interface Appointment {
   clientId: string;
   petId: string;
   serviceId: string; // Referência ao serviço
-  serviceName: string;
-  service: string;
-  clientName: string;
-  petName: string;
   date: Date;
   price: number;
   selectedExtras: ServiceExtra[]; // Extras selecionados
