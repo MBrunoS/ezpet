@@ -10,7 +10,7 @@ import {
   useDecrementPetsCount,
 } from "@/hooks/queries/useClientsQuery";
 import { useAddPet, useDeletePet } from "@/hooks/queries/usePetsQuery";
-import { ClientWithPets, Pet } from "@/types";
+import { Client, Pet } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Plus, Users } from "lucide-react";
 import {
@@ -31,39 +31,9 @@ export default function ClientsPage() {
   const addPetMutation = useAddPet();
   const deletePetMutation = useDeletePet();
 
-  const [clientsWithPets, setClientsWithPets] = useState<ClientWithPets[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [clientInEdit, setClientInEdit] = useState<ClientWithPets | null>(null);
-  const [clientToDelete, setClientToDelete] = useState<ClientWithPets | null>(
-    null
-  );
-
-  // Carregar pets para cada cliente quando necessário
-  React.useEffect(() => {
-    const loadPetsForClients = async () => {
-      if (!clients) return;
-
-      const clientsWithPetsData = await Promise.all(
-        clients.map(async (client) => {
-          // Por enquanto, vamos usar um array vazio para pets
-          // Em uma implementação mais avançada, poderíamos usar um hook personalizado
-          // ou implementar a busca de pets de forma mais eficiente
-          const pets: Pet[] = [];
-          return {
-            ...client,
-            pets,
-          };
-        })
-      );
-      setClientsWithPets(clientsWithPetsData);
-    };
-
-    if (clients && clients.length > 0) {
-      loadPetsForClients();
-    } else {
-      setClientsWithPets([]);
-    }
-  }, [clients, clientInEdit?.id]);
+  const [clientInEdit, setClientInEdit] = useState<Client | null>(null);
+  const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
 
   const handleSubmit = async (data: ClientFormData, tempPets: Pet[] = []) => {
     if (clientInEdit) {
@@ -103,7 +73,7 @@ export default function ClientsPage() {
     }
   };
 
-  const handleEdit = (client: ClientWithPets) => {
+  const handleEdit = (client: Client) => {
     setClientInEdit(client);
     setIsDialogOpen(true);
   };
@@ -167,12 +137,12 @@ export default function ClientsPage() {
           <div className="flex gap-2 items-center mb-4">
             <Users className="w-5 h-5 text-blue-600" />
             <h2 className="text-xl font-semibold">
-              Clientes ({clientsWithPets.length})
+              Clientes ({clients?.length || 0})
             </h2>
           </div>
 
           <ClientTable
-            clients={clientsWithPets}
+            clients={clients || []}
             onEdit={handleEdit}
             onDelete={setClientToDelete}
           />

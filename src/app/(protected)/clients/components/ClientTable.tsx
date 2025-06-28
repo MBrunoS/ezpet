@@ -10,12 +10,12 @@ import {
 } from "@/components/ui/table";
 import { Users } from "lucide-react";
 import { ClientTableRow } from "./ClientTableRow";
-import { ClientWithPets } from "@/types";
+import { Client } from "@/types";
 
 interface ClientTableProps {
-  clients: ClientWithPets[];
-  onEdit: (client: ClientWithPets) => void;
-  onDelete: (client: ClientWithPets) => void;
+  clients: Client[];
+  onEdit: (client: Client) => void;
+  onDelete: (client: Client) => void;
 }
 
 export function ClientTable({ clients, onEdit, onDelete }: ClientTableProps) {
@@ -40,7 +40,6 @@ export function ClientTable({ clients, onEdit, onDelete }: ClientTableProps) {
             <TableHead>Telefone</TableHead>
             <TableHead>Endereço</TableHead>
             <TableHead>Total de Pets</TableHead>
-            <TableHead>Pets</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>

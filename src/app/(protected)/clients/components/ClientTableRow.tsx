@@ -4,12 +4,12 @@ import React from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2, PawPrint } from "lucide-react";
-import { ClientWithPets } from "@/types";
+import { Client } from "@/types";
 
 interface ClientTableRowProps {
-  client: ClientWithPets;
-  onEdit: (client: ClientWithPets) => void;
-  onDelete: (client: ClientWithPets) => void;
+  client: Client;
+  onEdit: (client: Client) => void;
+  onDelete: (client: Client) => void;
 }
 
 export function ClientTableRow({
@@ -38,25 +38,8 @@ export function ClientTableRow({
       <TableCell>
         <div className="flex gap-2 items-center">
           <PawPrint className="w-4 h-4 text-blue-600" />
-          <span className="font-medium">{client.pets.length}</span>
+          <span className="font-medium">{client.petsCount}</span>
           <span className="text-sm text-gray-500">pets</span>
-        </div>
-      </TableCell>
-      <TableCell>
-        <div className="space-y-1">
-          {client.pets.slice(0, 2).map((pet, index) => (
-            <div key={index} className="text-sm">
-              <span className="font-medium">{pet.name}</span>
-              <span className="ml-1 text-gray-500">
-                ({pet.species} • {pet.breed})
-              </span>
-            </div>
-          ))}
-          {client.pets.length > 2 && (
-            <div className="text-sm text-gray-500">
-              +{client.pets.length - 2} mais...
-            </div>
-          )}
         </div>
       </TableCell>
       <TableCell className="text-right">

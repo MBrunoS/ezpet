@@ -86,10 +86,6 @@ export interface Pet {
   updatedAt?: Date;
 }
 
-export interface ClientWithPets extends Client {
-  pets: Pet[];
-} 
-
 export interface User {
   id: string;
   nome: string;

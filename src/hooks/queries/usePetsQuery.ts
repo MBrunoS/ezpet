@@ -124,11 +124,12 @@ export function useDeletePet() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async ({ id, clientId }: { id: string; clientId: string }) => {
       return deleteDoc(doc(db, 'pets', id));
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: petKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: petKeys.byClient(variables.clientId) });
       toast.success('Pet excluído com sucesso!');
     },
     onError: (error) => {

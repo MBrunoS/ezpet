@@ -32,13 +32,13 @@ import {
   useUpdatePet,
   useDeletePet,
 } from "@/hooks/queries/usePetsQuery";
-import { ClientWithPets } from "@/types";
+import { Client } from "@/types";
 
 interface ClientFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: ClientFormData, tempPets: Pet[]) => Promise<void>;
-  clientInEdit: ClientWithPets | null;
+  clientInEdit: Client | null;
   onPetAdded?: () => void;
   onPetRemoved?: () => void;
 }
@@ -163,11 +163,14 @@ export function ClientForm({
       setTempPets(tempPets.filter((p) => p.id !== pet.id));
     } else if (clientInEdit) {
       // Remover pet do banco
-      deletePetMutation.mutate(pet.id, {
-        onSuccess: () => {
-          onPetRemoved?.();
-        },
-      });
+      deletePetMutation.mutate(
+        { id: pet.id, clientId: clientInEdit.id },
+        {
+          onSuccess: () => {
+            onPetRemoved?.();
+          },
+        }
+      );
     }
   };
 

@@ -10,10 +10,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ClientWithPets } from "@/types";
+import { Client } from "@/types";
 
 interface DeleteConfirmationDialogProps {
-  client: ClientWithPets | null;
+  client: Client | null;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -30,7 +30,7 @@ export function DeleteConfirmationDialog({
           <DialogTitle>Confirmar Exclusão</DialogTitle>
           <DialogDescription>
             Tem certeza que deseja excluir o client "{client?.name}" e todos os
-            seus {client?.pets.length} pets? Esta ação não pode ser desfeita.
+            seus {client?.petsCount} pets? Esta ação não pode ser desfeita.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
