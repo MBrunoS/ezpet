@@ -7,11 +7,11 @@ import {
   User as FirebaseUser
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
+import { toast } from 'sonner';
 
 interface AuthState {
   user: FirebaseUser | null;
   loading: boolean;
-  error: string | null;
 }
 
 interface AuthMethods {
@@ -23,7 +23,6 @@ interface AuthMethods {
 export function useAuth(): AuthState & AuthMethods {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -35,31 +34,34 @@ export function useAuth(): AuthState & AuthMethods {
   }, []);
 
   const signUp = async (email: string, password: string): Promise<void> => {
-    setError(null);
     try {
       await createUserWithEmailAndPassword(auth, email, password);
+      toast.success('Conta criada com sucesso!');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao criar conta';
+      toast.error(errorMessage);
     }
   };
 
   const signIn = async (email: string, password: string): Promise<void> => {
-    setError(null);
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      toast.success('Login realizado com sucesso!');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao fazer login';
+      toast.error(errorMessage);
     }
   };
 
   const signOut = async (): Promise<void> => {
-    setError(null);
     try {
       await firebaseSignOut(auth);
+      toast.success('Logout realizado com sucesso!');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao fazer logout';
+      toast.error(errorMessage);
     }
   };
 
-  return { user, loading, error, signUp, signIn, signOut };
+  return { user, loading, signUp, signIn, signOut };
 } 

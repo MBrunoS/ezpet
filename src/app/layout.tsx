@@ -2,6 +2,7 @@ import React from "react";
 import "./globals.css";
 import { Space_Grotesk, Noto_Sans } from "next/font/google";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { Toaster } from "@/components/ui/sonner";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         className={`${spaceGrotesk.variable} ${notoSans.variable} font-sans bg-background min-h-screen`}
       >
         <AuthProvider>{children}</AuthProvider>
+        <Toaster />
       </body>
     </html>
   );

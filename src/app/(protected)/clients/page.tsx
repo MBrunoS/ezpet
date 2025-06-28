@@ -17,20 +17,13 @@ export default function ClientsPage() {
   const {
     clients,
     loading: loadingClients,
-    error: errorClients,
     addClient,
     updateClient,
     removeClient,
     incrementPetsCount,
     decrementPetsCount,
   } = useClients();
-  const {
-    pets,
-    loading: loadingPets,
-    error: errorPets,
-    loadPetsByClient,
-    addPet,
-  } = usePets();
+  const { loading: loadingPets, loadPetsByClient, addPet } = usePets();
   const [clientsWithPets, setClientsWithPets] = useState<ClientWithPets[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [clientInEdit, setClientInEdit] = useState<ClientWithPets | null>(null);
@@ -131,20 +124,11 @@ export default function ClientsPage() {
   };
 
   const loading = loadingClients || loadingPets;
-  const error = errorClients || errorPets;
 
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="text-lg">Carregando clientes...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-red-500">Erro: {error}</div>
       </div>
     );
   }

@@ -13,16 +13,16 @@ import {
 import { db } from '../lib/firebase';
 import { Product } from '../types';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface StockState {
   products: Product[];
   lowStockProducts: Product[];
   loading: boolean;
-  error: string | null;
 }
 
 interface StockMethods {
-  addProduct: (product: Omit<Product, 'id'>) => Promise<boolean>;
+  addProduct: (product: Omit<Product, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => Promise<boolean>;
   updateProduct: (id: string, updatedData: Partial<Product>) => Promise<boolean>;
   removeProduct: (id: string) => Promise<boolean>;
   updateStock: (id: string, quantity: number) => Promise<boolean>;
@@ -33,7 +33,6 @@ export function useStock(): StockState & StockMethods {
   const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
 
   const loadProducts = async (): Promise<void> => {
     if (!user) return;
@@ -49,13 +48,13 @@ export function useStock(): StockState & StockMethods {
       })) as Product[];
       setProducts(productsData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Um erro ocorreu');
+      toast.error(err instanceof Error ? err.message : 'Erro ao carregar produtos');
     } finally {
       setLoading(false);
     }
   };
 
-  const addProduct = async (product: Omit<Product, 'id'>): Promise<boolean> => {
+  const addProduct = async (product: Omit<Product, 'id' | 'userId' | 'createdAt' | 'updatedAt'>): Promise<boolean> => {
     if (!user) return false;
     
     try {
@@ -67,9 +66,10 @@ export function useStock(): StockState & StockMethods {
       };
       await addDoc(collection(db, 'products'), newProduct);
       await loadProducts();
+      toast.success('Produto criado com sucesso!');
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Um erro ocorreu');
+      toast.error(err instanceof Error ? err.message : 'Erro ao criar produto');
       return false;
     }
   };
@@ -84,9 +84,10 @@ export function useStock(): StockState & StockMethods {
         updatedAt: serverTimestamp()
       });
       await loadProducts();
+      toast.success('Produto atualizado com sucesso!');
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Um erro ocorreu');
+      toast.error(err instanceof Error ? err.message : 'Erro ao atualizar produto');
       return false;
     }
   };
@@ -97,9 +98,10 @@ export function useStock(): StockState & StockMethods {
     try {
       await deleteDoc(doc(db, 'products', id));
       await loadProducts();
+      toast.success('Produto excluído com sucesso!');
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Um erro ocorreu');
+      toast.error(err instanceof Error ? err.message : 'Erro ao excluir produto');
       return false;
     }
   };
@@ -114,9 +116,10 @@ export function useStock(): StockState & StockMethods {
         updatedAt: serverTimestamp()
       });
       await loadProducts();
+      toast.success('Estoque atualizado com sucesso!');
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Um erro ocorreu');
+      toast.error(err instanceof Error ? err.message : 'Erro ao atualizar estoque');
       return false;
     }
   };
@@ -133,7 +136,6 @@ export function useStock(): StockState & StockMethods {
     products,
     lowStockProducts,
     loading,
-    error,
     addProduct,
     updateProduct,
     removeProduct,

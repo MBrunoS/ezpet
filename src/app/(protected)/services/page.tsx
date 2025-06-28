@@ -14,7 +14,6 @@ export default function ServicesPage() {
   const {
     services,
     loading: loadingServices,
-    error: errorServices,
     addService,
     updateService,
     removeService,
@@ -65,14 +64,6 @@ export default function ServicesPage() {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="text-lg">Carregando serviços...</div>
-      </div>
-    );
-  }
-
-  if (errorServices) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-red-500">Erro: {errorServices}</div>
       </div>
     );
   }

@@ -12,31 +12,22 @@ import { AppointmentForm } from "./components/AppointmentForm";
 import { AppointmentTable } from "./components/AppointmentTable";
 import { DeleteConfirmationDialog } from "./components/DeleteConfirmationDialog";
 import { AppointmentFormData } from "./schema";
+import { toast } from "sonner";
 
 export default function AppointmentsPage() {
   const {
     appointments,
     loading: loadingAppointments,
-    error: errorAppointments,
     addAppointment,
     updateAppointment,
     removeAppointment,
   } = useAppointments();
 
-  const {
-    clients,
-    loading: loadingClients,
-    error: errorClients,
-  } = useClients();
+  const { clients, loading: loadingClients } = useClients();
 
-  const { pets, loading: loadingPets, error: errorPets } = usePets();
+  const { pets, loading: loadingPets } = usePets();
 
-  const {
-    services,
-    loading: loadingServices,
-    error: errorServices,
-    getServiceById,
-  } = useServices();
+  const { services, loading: loadingServices } = useServices();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [appointmentInEdit, setAppointmentInEdit] =
@@ -51,7 +42,7 @@ export default function AppointmentsPage() {
     const service = services.find((s) => s.id === data.serviceId);
 
     if (!client || !pet || !service) {
-      console.error("Dados não encontrados");
+      toast.error("Dados não encontrados");
       return;
     }
 
@@ -63,6 +54,7 @@ export default function AppointmentsPage() {
     const totalPrice = service.price + extrasPrice;
 
     const appointmentData = {
+      userId: "", // Será preenchido pelo hook
       clientId: data.clientId,
       petId: data.petId,
       serviceId: data.serviceId,
@@ -83,12 +75,14 @@ export default function AppointmentsPage() {
         appointmentData
       );
       if (success) {
+        toast.success("Agendamento atualizado com sucesso!");
         setIsDialogOpen(false);
         setAppointmentInEdit(null);
       }
     } else {
       const success = await addAppointment(appointmentData);
       if (success) {
+        toast.success("Agendamento criado com sucesso!");
         setIsDialogOpen(false);
       }
     }
@@ -101,7 +95,10 @@ export default function AppointmentsPage() {
 
   const handleDelete = async () => {
     if (appointmentToDelete) {
-      await removeAppointment(appointmentToDelete.id);
+      const success = await removeAppointment(appointmentToDelete.id);
+      if (success) {
+        toast.success("Agendamento excluído com sucesso!");
+      }
       setAppointmentToDelete(null);
     }
   };
@@ -116,21 +113,13 @@ export default function AppointmentsPage() {
     setAppointmentInEdit(null);
   };
 
-  if (loadingAppointments || loadingClients || loadingPets || loadingServices) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-lg">Carregando...</div>
-      </div>
-    );
-  }
+  const loading =
+    loadingAppointments || loadingClients || loadingPets || loadingServices;
 
-  if (errorAppointments || errorClients || errorPets || errorServices) {
+  if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="text-red-500">
-          Erro:{" "}
-          {errorAppointments || errorClients || errorPets || errorServices}
-        </div>
+        <div className="text-lg">Carregando agendamentos...</div>
       </div>
     );
   }
@@ -173,7 +162,6 @@ export default function AppointmentsPage() {
         clients={clients}
         pets={pets}
         loadingPets={loadingPets}
-        errorPets={errorPets}
       />
 
       <DeleteConfirmationDialog

@@ -13,7 +13,7 @@ import {
 } from "./components";
 
 export default function StockPage() {
-  const { products, loading, error, addProduct, updateProduct, removeProduct } =
+  const { products, loading, addProduct, updateProduct, removeProduct } =
     useStock();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [productInEdit, setProductInEdit] = useState<Product | null>(null);
@@ -53,14 +53,6 @@ export default function StockPage() {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="text-lg">Carregando produtos...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-red-500">Erro: {error}</div>
       </div>
     );
   }

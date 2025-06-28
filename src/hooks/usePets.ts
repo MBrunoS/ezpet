@@ -13,11 +13,11 @@ import {
 import { db } from '../lib/firebase';
 import { Pet } from '../types';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface PetsState {
   pets: Pet[];
   loading: boolean;
-  error: string | null;
 }
 
 interface PetsMethods {
@@ -32,7 +32,6 @@ export function usePets(): PetsState & PetsMethods {
   const { user } = useAuth();
   const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
 
   const loadAllPets = useCallback(async (): Promise<void> => {
     if (!user) return;
@@ -48,7 +47,7 @@ export function usePets(): PetsState & PetsMethods {
       })) as Pet[];
       setPets(petsData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Um erro ocorreu');
+      toast.error(err instanceof Error ? err.message : 'Erro ao carregar pets');
     } finally {
       setLoading(false);
     }
@@ -67,7 +66,7 @@ export function usePets(): PetsState & PetsMethods {
       })) as Pet[];
       return petsData;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Um erro ocorreu');
+      toast.error(err instanceof Error ? err.message : 'Erro ao carregar pets');
       return [];
     }
   }, [user]);
@@ -85,12 +84,13 @@ export function usePets(): PetsState & PetsMethods {
       };
       await addDoc(collection(db, 'pets'), newPet);
       await loadAllPets();
+      toast.success('Pet criado com sucesso!');
       if (onPetAdded) {
         onPetAdded();
       }
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Um erro ocorreu');
+      toast.error(err instanceof Error ? err.message : 'Erro ao criar pet');
       return false;
     }
   }, [loadAllPets, user]);
@@ -105,9 +105,10 @@ export function usePets(): PetsState & PetsMethods {
         updatedAt: serverTimestamp()
       });
       await loadAllPets();
+      toast.success('Pet atualizado com sucesso!');
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Um erro ocorreu');
+      toast.error(err instanceof Error ? err.message : 'Erro ao atualizar pet');
       return false;
     }
   }, [loadAllPets]);
@@ -118,12 +119,13 @@ export function usePets(): PetsState & PetsMethods {
     try {
       await deleteDoc(doc(db, 'pets', id));
       await loadAllPets();
+      toast.success('Pet excluído com sucesso!');
       if (onPetRemoved) {
         onPetRemoved();
       }
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Um erro ocorreu');
+      toast.error(err instanceof Error ? err.message : 'Erro ao excluir pet');
       return false;
     }
   }, [loadAllPets]);
@@ -137,7 +139,6 @@ export function usePets(): PetsState & PetsMethods {
   return {
     pets,
     loading,
-    error,
     addPet,
     updatePet,
     removePet,

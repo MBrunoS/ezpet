@@ -15,11 +15,11 @@ import { db } from '../lib/firebase';
 import { Service } from '../types';
 import { useAuth } from '@/contexts/AuthContext';
 import { ServiceFormData } from '@/app/(protected)/services/schema';
+import { toast } from 'sonner';
 
 interface ServicesState {
   services: Service[];
   loading: boolean;
-  error: string | null;
 }
 
 type DeepPartial<T> = {
@@ -39,7 +39,6 @@ export function useServices(): ServicesState & ServicesMethods {
   const { user } = useAuth();
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
 
   const loadServices = useCallback(async (): Promise<void> => {
     if (!user) return;
@@ -61,7 +60,7 @@ export function useServices(): ServicesState & ServicesMethods {
       })) as Service[];
       setServices(servicesData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      toast.error(err instanceof Error ? err.message : 'Erro ao carregar serviços');
     } finally {
       setLoading(false);
     }
@@ -80,9 +79,10 @@ export function useServices(): ServicesState & ServicesMethods {
       };
       await addDoc(collection(db, 'services'), newService);
       await loadServices();
+      toast.success('Serviço criado com sucesso!');
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      toast.error(err instanceof Error ? err.message : 'Erro ao criar serviço');
       return false;
     }
   }, [loadServices, user]);
@@ -97,9 +97,10 @@ export function useServices(): ServicesState & ServicesMethods {
         updatedAt: serverTimestamp()
       });
       await loadServices();
+      toast.success('Serviço atualizado com sucesso!');
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      toast.error(err instanceof Error ? err.message : 'Erro ao atualizar serviço');
       return false;
     }
   }, [loadServices]);
@@ -110,9 +111,10 @@ export function useServices(): ServicesState & ServicesMethods {
     try {
       await deleteDoc(doc(db, 'services', id));
       await loadServices();
+      toast.success('Serviço excluído com sucesso!');
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      toast.error(err instanceof Error ? err.message : 'Erro ao excluir serviço');
       return false;
     }
   }, [loadServices]);
@@ -134,7 +136,6 @@ export function useServices(): ServicesState & ServicesMethods {
   return {
     services,
     loading,
-    error,
     addService,
     updateService,
     removeService,

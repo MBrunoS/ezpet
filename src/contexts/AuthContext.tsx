@@ -9,6 +9,7 @@ import {
   onAuthStateChanged,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { toast } from "sonner";
 
 interface AuthContextType {
   user: User | null;
@@ -36,8 +37,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
+      toast.success("Login realizado com sucesso!");
     } catch (error) {
       console.error("Erro ao fazer login com Google:", error);
+      toast.error("Erro ao fazer login com Google");
       throw error;
     }
   };
@@ -45,8 +48,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       await signOut(auth);
+      toast.success("Logout realizado com sucesso!");
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
+      toast.error("Erro ao fazer logout");
       throw error;
     }
   };

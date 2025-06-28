@@ -14,12 +14,12 @@ import {
 import { db } from '../lib/firebase';
 import { Appointment, Service } from '../types';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface AppointmentsState {
   appointments: Appointment[];
   appointmentsToday: Appointment[];
   loading: boolean;
-  error: string | null;
 }
 
 interface AppointmentsMethods {
@@ -35,7 +35,6 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
   const { user } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
 
   const loadAppointments = useCallback(async (): Promise<void> => {
     if (!user) return;
@@ -58,7 +57,7 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
       })) as Appointment[];
       setAppointments(appointmentsData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      toast.error(err instanceof Error ? err.message : 'Erro ao carregar agendamentos');
     } finally {
       setLoading(false);
     }
@@ -87,6 +86,14 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
       );
 
       const snapshot = await getDocs(q);
+
+      console.log("snapshot", snapshot);
+      
+      // Se não há agendamentos na data, permitir
+      if (snapshot.empty) {
+        return true;
+      }
+
       const appointmentsWithConflict = snapshot.docs.filter(doc => {
         const appointment = doc.data();
         const appointmentDate = appointment.date.toDate();
@@ -159,7 +166,7 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
       // Verificar se o horário está disponível
       const isAvailable = await checkTimeSlotAvailability(appointment.date, serviceDuration);
       if (!isAvailable) {
-        setError('Este horário já está ocupado');
+        toast.error('Este horário já está ocupado');
         return false;
       }
 
@@ -174,7 +181,7 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
       await loadAppointments();
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      toast.error(err instanceof Error ? err.message : 'Erro ao criar agendamento');
       return false;
     }
   }, [loadAppointments, checkTimeSlotAvailability, user]);
@@ -191,7 +198,7 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
         
         const isAvailable = await checkTimeSlotAvailability(updatedData.date, serviceDuration, id);
         if (!isAvailable) {
-          setError('Este horário já está ocupado');
+          toast.error('Este horário já está ocupado');
           return false;
         }
       }
@@ -204,7 +211,7 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
       await loadAppointments();
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      toast.error(err instanceof Error ? err.message : 'Erro ao atualizar agendamento');
       return false;
     }
   }, [loadAppointments, checkTimeSlotAvailability]);
@@ -217,7 +224,7 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
       await loadAppointments();
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      toast.error(err instanceof Error ? err.message : 'Erro ao excluir agendamento');
       return false;
     }
   }, [loadAppointments]);
@@ -243,7 +250,6 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
     appointments,
     appointmentsToday,
     loading,
-    error,
     addAppointment,
     updateAppointment,
     removeAppointment,

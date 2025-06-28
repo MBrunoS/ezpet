@@ -44,7 +44,6 @@ interface AppointmentFormProps {
   clients: any[];
   pets: any[];
   loadingPets: boolean;
-  errorPets: string | null;
 }
 
 export function AppointmentForm({
@@ -55,7 +54,6 @@ export function AppointmentForm({
   clients,
   pets,
   loadingPets,
-  errorPets,
 }: AppointmentFormProps) {
   const [loading, setLoading] = useState(false);
   const { services, loading: loadingServices } = useServices();
@@ -141,8 +139,11 @@ export function AppointmentForm({
     });
   };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString("pt-BR");
+  const formatDateForInput = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   };
 
   return (
@@ -305,7 +306,7 @@ export function AppointmentForm({
                     <Input
                       type="date"
                       {...field}
-                      value={formatDate(field.value)}
+                      value={formatDateForInput(field.value)}
                       onChange={(e) => {
                         const date = new Date(e.target.value);
                         const currentTime = field.value;

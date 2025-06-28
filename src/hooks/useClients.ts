@@ -14,15 +14,15 @@ import {
 import { db } from '../lib/firebase';
 import { Client } from '../types';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface ClientsState {
   clients: Client[];
   loading: boolean;
-  error: string | null;
 }
 
 interface ClientsMethods {
-  addClient: (client: Omit<Client, 'id' | 'petsCount'>) => Promise<string | null>;
+  addClient: (client: Omit<Client, 'id' | 'petsCount' | 'userId'>) => Promise<string | null>;
   updateClient: (id: string, updatedData: Partial<Client>) => Promise<boolean>;
   removeClient: (id: string) => Promise<boolean>;
   loadClients: () => Promise<void>;
@@ -34,7 +34,6 @@ export function useClients(): ClientsState & ClientsMethods {
   const { user } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
 
   const loadClients = async (): Promise<void> => {
     if (!user) return;
@@ -50,7 +49,7 @@ export function useClients(): ClientsState & ClientsMethods {
       })) as Client[];
       setClients(clientsData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      toast.error(err instanceof Error ? err.message : 'Erro ao carregar clientes');
     } finally {
       setLoading(false);
     }
@@ -62,7 +61,7 @@ export function useClients(): ClientsState & ClientsMethods {
     }
   }, [user]);
 
-  const addClient = async (client: Omit<Client, 'id' | 'petsCount'>): Promise<string | null> => {
+  const addClient = async (client: Omit<Client, 'id' | 'petsCount' | 'userId'>): Promise<string | null> => {
     if (!user) return null;
     
     try {
@@ -75,9 +74,10 @@ export function useClients(): ClientsState & ClientsMethods {
       };
       const docRef = await addDoc(collection(db, 'clients'), newClient);
       await loadClients();
+      toast.success('Cliente criado com sucesso!');
       return docRef.id;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      toast.error(err instanceof Error ? err.message : 'Erro ao criar cliente');
       return null;
     }
   };
@@ -92,9 +92,10 @@ export function useClients(): ClientsState & ClientsMethods {
         updatedAt: serverTimestamp()
       });
       await loadClients();
+      toast.success('Cliente atualizado com sucesso!');
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      toast.error(err instanceof Error ? err.message : 'Erro ao atualizar cliente');
       return false;
     }
   };
@@ -117,9 +118,10 @@ export function useClients(): ClientsState & ClientsMethods {
       // Depois remover o cliente
       await deleteDoc(doc(db, 'clients', id));
       await loadClients();
+      toast.success('Cliente excluído com sucesso!');
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      toast.error(err instanceof Error ? err.message : 'Erro ao excluir cliente');
       return false;
     }
   };
@@ -136,7 +138,7 @@ export function useClients(): ClientsState & ClientsMethods {
       await loadClients();
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      toast.error(err instanceof Error ? err.message : 'Erro ao atualizar contador de pets');
       return false;
     }
   };
@@ -153,7 +155,7 @@ export function useClients(): ClientsState & ClientsMethods {
       await loadClients();
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      toast.error(err instanceof Error ? err.message : 'Erro ao atualizar contador de pets');
       return false;
     }
   };
@@ -161,7 +163,6 @@ export function useClients(): ClientsState & ClientsMethods {
   return {
     clients,
     loading,
-    error,
     addClient,
     updateClient,
     removeClient,
