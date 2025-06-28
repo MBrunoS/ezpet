@@ -20,9 +20,13 @@ interface ServicesState {
   error: string | null;
 }
 
+type DeepPartial<T> = {
+  [P in keyof T]?: DeepPartial<T[P]>;
+};
+
 interface ServicesMethods {
   addService: (service: Omit<Service, 'id'>) => Promise<boolean>;
-  updateService: (id: string, updatedData: Partial<Service>) => Promise<boolean>;
+  updateService: (id: string, updatedData: DeepPartial<Service>) => Promise<boolean>;
   removeService: (id: string) => Promise<boolean>;
   loadServices: () => Promise<void>;
   getActiveServices: () => Service[];
@@ -71,7 +75,7 @@ export function useServices(): ServicesState & ServicesMethods {
     }
   }, [loadServices]);
 
-  const updateService = useCallback(async (id: string, updatedData: Partial<Service>): Promise<boolean> => {
+  const updateService = useCallback(async (id: string, updatedData: DeepPartial<Service>): Promise<boolean> => {
     try {
       const serviceRef = doc(db, 'services', id);
       await updateDoc(serviceRef, {

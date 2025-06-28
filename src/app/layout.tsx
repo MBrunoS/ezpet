@@ -1,9 +1,7 @@
 import React from "react";
 import "./globals.css";
 import { Space_Grotesk, Noto_Sans } from "next/font/google";
-import Navbar from "../components/Navbar";
-import { AppSidebar } from "../components/AppSidebar";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -32,15 +30,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <body
         className={`${spaceGrotesk.variable} ${notoSans.variable} font-sans bg-background min-h-screen`}
       >
-        <SidebarProvider>
-          <div className="flex w-full h-screen">
-            <AppSidebar />
-            <div className="overflow-y-auto flex-1">
-              <Navbar />
-              <main className="p-10">{children}</main>
-            </div>
-          </div>
-        </SidebarProvider>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
