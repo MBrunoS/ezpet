@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
-import { usePetShopProfile } from './usePetShopProfile';
-import { useAppointments } from './useAppointments';
-import { useServices } from './useServices';
+import { usePetShopProfile } from '@/hooks/queries/usePetShopProfileQuery';
+import { useAppointments } from '@/hooks/queries/useAppointmentsQuery';
+import { useServices } from '@/hooks/queries/useServicesQuery';
 import { Service } from '@/types';
 
 interface UseAvailableTimeSlotsProps {
@@ -16,9 +16,9 @@ interface TimeSlot {
 }
 
 export function useAvailableTimeSlots({ selectedDate, selectedService }: UseAvailableTimeSlotsProps) {
-  const { profile } = usePetShopProfile();
-  const { appointments } = useAppointments();
-  const { services } = useServices();
+  const { data: profile } = usePetShopProfile();
+  const { data: appointments } = useAppointments();
+  const { data: services } = useServices();
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -48,15 +48,15 @@ export function useAvailableTimeSlots({ selectedDate, selectedService }: UseAvai
 
   // Verificar se há conflito de horário com agendamentos existentes
   const hasTimeConflict = (startTime: Date, endTime: Date): boolean => {
-    const dayAppointments = appointments.filter(appointment => {
+    const dayAppointments = appointments?.filter(appointment => {
       const appointmentDate = new Date(appointment.date);
       return appointmentDate.toDateString() === selectedDate.toDateString();
-    });
+    }) || [];
 
     return dayAppointments.some(appointment => {
       const appointmentStart = new Date(appointment.date);
       // Buscar o serviço pelo serviceId para obter a duração
-      const service = services.find(s => s.id === appointment.serviceId);
+      const service = services?.find(s => s.id === appointment.serviceId);
       const appointmentDuration = service?.duration || 60;
       const appointmentEnd = new Date(appointmentStart.getTime() + appointmentDuration * 60000);
       
@@ -69,15 +69,15 @@ export function useAvailableTimeSlots({ selectedDate, selectedService }: UseAvai
   const isCapacityReached = (time: Date): boolean => {
     if (!profile?.appointmentCapacity) return false;
     
-    const dayAppointments = appointments.filter(appointment => {
+    const dayAppointments = appointments?.filter(appointment => {
       const appointmentDate = new Date(appointment.date);
       return appointmentDate.toDateString() === selectedDate.toDateString();
-    });
+    }) || [];
 
     // Contar agendamentos que realmente se sobrepõem com o horário proposto
     const overlappingAppointments = dayAppointments.filter(appointment => {
       const appointmentStart = new Date(appointment.date);
-      const service = services.find(s => s.id === appointment.serviceId);
+      const service = services?.find(s => s.id === appointment.serviceId);
       const appointmentDuration = service?.duration || 60;
       const appointmentEnd = new Date(appointmentStart.getTime() + appointmentDuration * 60000);
       

@@ -1,7 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import { useStock } from "@/hooks/useStock";
+import {
+  useStock,
+  useAddProduct,
+  useUpdateProduct,
+  useDeleteProduct,
+} from "@/hooks/queries/useStockQuery";
 import { Product } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Plus, Package } from "lucide-react";
@@ -13,17 +18,32 @@ import {
 } from "./components";
 
 export default function StockPage() {
-  const { products, loading, addProduct, updateProduct, removeProduct } =
-    useStock();
+  const { data: products, isLoading } = useStock();
+  const addProductMutation = useAddProduct();
+  const updateProductMutation = useUpdateProduct();
+  const deleteProductMutation = useDeleteProduct();
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [productInEdit, setProductInEdit] = useState<Product | null>(null);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
   const handleSubmit = async (data: ProductFormData) => {
     if (productInEdit) {
-      await updateProduct(productInEdit.id, data);
+      updateProductMutation.mutate(
+        { id: productInEdit.id, data },
+        {
+          onSuccess: () => {
+            setIsFormOpen(false);
+            setProductInEdit(null);
+          },
+        }
+      );
     } else {
-      await addProduct(data);
+      addProductMutation.mutate(data, {
+        onSuccess: () => {
+          setIsFormOpen(false);
+        },
+      });
     }
   };
 
@@ -32,10 +52,13 @@ export default function StockPage() {
     setIsFormOpen(true);
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (productToDelete) {
-      await removeProduct(productToDelete.id);
-      setProductToDelete(null);
+      deleteProductMutation.mutate(productToDelete.id, {
+        onSuccess: () => {
+          setProductToDelete(null);
+        },
+      });
     }
   };
 
@@ -49,7 +72,7 @@ export default function StockPage() {
     setProductInEdit(null);
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="text-lg">Carregando produtos...</div>
@@ -75,19 +98,18 @@ export default function StockPage() {
           <div className="flex gap-2 items-center mb-4">
             <Package className="w-5 h-5 text-blue-600" />
             <h2 className="text-xl font-semibold">
-              Produtos ({products.length})
+              Produtos ({products?.length || 0})
             </h2>
           </div>
 
           <ProductTable
-            products={products}
+            products={products || []}
             onEdit={handleEdit}
             onDelete={setProductToDelete}
           />
         </div>
       </div>
 
-      {/* Formulário de produto */}
       <ProductForm
         isOpen={isFormOpen}
         onClose={closeForm}
@@ -95,12 +117,11 @@ export default function StockPage() {
         product={productInEdit}
       />
 
-      {/* Dialog de confirmação para exclusão */}
       <DeleteConfirmationDialog
         product={productToDelete}
         isOpen={!!productToDelete}
-        onClose={() => setProductToDelete(null)}
         onConfirm={handleDelete}
+        onClose={() => setProductToDelete(null)}
       />
     </div>
   );

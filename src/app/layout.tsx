@@ -3,6 +3,7 @@ import "./globals.css";
 import { Space_Grotesk, Noto_Sans } from "next/font/google";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
+import { QueryProvider } from "@/providers/QueryProvider";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -31,7 +32,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <body
         className={`${spaceGrotesk.variable} ${notoSans.variable} font-sans bg-background min-h-screen`}
       >
-        <AuthProvider>{children}</AuthProvider>
+        <QueryProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </QueryProvider>
         <Toaster />
       </body>
     </html>

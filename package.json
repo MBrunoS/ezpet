@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -19,12 +19,14 @@
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-switch": "^1.2.5",
     "@radix-ui/react-tooltip": "^1.2.7",
+    "@tanstack/react-query": "^5.81.5",
+    "@tanstack/react-query-devtools": "^5.81.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^2.30.0",
     "firebase": "^10.5.0",
     "lucide-react": "^0.522.0",
-    "next": "^14.0.0",
+    "next": "^15.3.4",
     "next-themes": "^0.4.6",
     "react": "^18.2.0",
     "react-datepicker": "^4.21.0",
@@ -40,11 +42,10 @@
   "devDependencies": {
     "@types/node": "^22.14.0",
     "@types/react": "^19.1.0",
-    "@types/react-datepicker": "^7.0.0",
     "@types/react-dom": "^19.1.1",
     "autoprefixer": "^10.4.21",
-    "eslint": "^8.52.0",
-    "eslint-config-next": "^14.0.0",
+    "eslint": "^9.30.0",
+    "eslint-config-next": "^15.3.4",
     "postcss": "^8.5.3",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.2"

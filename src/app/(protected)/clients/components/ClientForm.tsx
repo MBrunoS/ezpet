@@ -26,7 +26,12 @@ import { clientSchema, ClientFormData, PetFormData } from "../schema";
 import { Pet } from "@/types";
 import { PetForm } from "./PetForm";
 import { Plus, Users } from "lucide-react";
-import { usePets } from "@/hooks/usePets";
+import {
+  usePetsByClient,
+  useAddPet,
+  useUpdatePet,
+  useDeletePet,
+} from "@/hooks/queries/usePetsQuery";
 import { ClientWithPets } from "@/types";
 
 interface ClientFormProps {
@@ -46,10 +51,19 @@ export function ClientForm({
   onPetAdded,
   onPetRemoved,
 }: ClientFormProps) {
-  const [pets, setPets] = useState<Pet[]>([]);
+  // Estado local só para pets temporários de novo cliente
+  const [tempPets, setTempPets] = useState<Pet[]>([]);
   const [showPetForm, setShowPetForm] = useState(false);
   const [editingPet, setEditingPet] = useState<Pet | null>(null);
-  const { loadPetsByClient, addPet, updatePet, removePet } = usePets();
+
+  const addPetMutation = useAddPet();
+  const updatePetMutation = useUpdatePet();
+  const deletePetMutation = useDeletePet();
+
+  // Hook para buscar pets do cliente existente
+  const { data: petsFromDb = [], isLoading: loadingPets } = usePetsByClient(
+    clientInEdit?.id ?? ""
+  );
 
   const form = useForm<ClientFormData>({
     resolver: zodResolver(clientSchema),
@@ -70,8 +84,6 @@ export function ClientForm({
         phone: clientInEdit.phone,
         address: clientInEdit.address || "",
       });
-      // Carregar pets do cliente
-      loadClientPets(clientInEdit.id);
     } else if (!clientInEdit && isOpen) {
       form.reset({
         name: "",
@@ -79,22 +91,21 @@ export function ClientForm({
         phone: "",
         address: "",
       });
-      setPets([]);
+      setTempPets([]);
     }
   }, [clientInEdit, isOpen, form]);
 
-  const loadClientPets = async (clientId: string) => {
-    const pets = await loadPetsByClient(clientId);
-    setPets(pets);
-  };
+  // Pets a serem exibidos
+  const pets = clientInEdit ? petsFromDb : tempPets;
 
   const handleSubmit = async (data: ClientFormData) => {
-    await onSubmit(data, pets);
+    // Para novo cliente, enviar pets temporários
+    await onSubmit(data, tempPets);
   };
 
   const handleClose = () => {
     onClose();
-    setPets([]);
+    setTempPets([]);
     setShowPetForm(false);
     setEditingPet(null);
   };
@@ -102,29 +113,41 @@ export function ClientForm({
   const handleSavePet = async (petData: PetFormData) => {
     if (editingPet) {
       // Atualizar pet existente
-      await updatePet(editingPet.id, petData);
-      setEditingPet(null);
-      // Recarregar pets para refletir a mudança
       if (clientInEdit) {
-        await loadClientPets(clientInEdit.id);
+        updatePetMutation.mutate(
+          { id: editingPet.id, data: petData },
+          {
+            onSuccess: () => {
+              setEditingPet(null);
+            },
+          }
+        );
+      } else {
+        // Atualizar pet temporário
+        setTempPets((prev) =>
+          prev.map((p) => (p.id === editingPet.id ? { ...p, ...petData } : p))
+        );
+        setEditingPet(null);
       }
     } else if (clientInEdit) {
       // Adicionar novo pet ao cliente existente
-      await addPet(
+      addPetMutation.mutate(
         { ...petData, clientId: clientInEdit.id },
-        clientInEdit.id,
-        onPetAdded
+        {
+          onSuccess: () => {
+            onPetAdded?.();
+          },
+        }
       );
-      // Recarregar pets para refletir a mudança
-      await loadClientPets(clientInEdit.id);
     } else {
       // Adicionar pet temporário (será salvo quando o cliente for criado)
       const tempPet: Pet = {
         id: `temp-${Date.now()}`,
+        userId: "",
         clientId: "",
         ...petData,
       };
-      setPets([...pets, tempPet]);
+      setTempPets([...tempPets, tempPet]);
     }
     setShowPetForm(false);
   };
@@ -137,14 +160,14 @@ export function ClientForm({
   const handleRemovePet = async (pet: Pet) => {
     if (pet.id.startsWith("temp-")) {
       // Remover pet temporário
-      setPets(pets.filter((p) => p.id !== pet.id));
-    } else {
+      setTempPets(tempPets.filter((p) => p.id !== pet.id));
+    } else if (clientInEdit) {
       // Remover pet do banco
-      await removePet(pet.id, pet.clientId, onPetRemoved);
-      // Recarregar pets para refletir a mudança
-      if (clientInEdit) {
-        await loadClientPets(clientInEdit.id);
-      }
+      deletePetMutation.mutate(pet.id, {
+        onSuccess: () => {
+          onPetRemoved?.();
+        },
+      });
     }
   };
 

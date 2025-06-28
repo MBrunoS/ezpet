@@ -32,7 +32,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar, Clock, User, PawPrint, DollarSign } from "lucide-react";
 import { Appointment } from "@/types";
 import { appointmentSchema, AppointmentFormData } from "../schema";
-import { useServices } from "@/hooks/useServices";
+import { useServices } from "@/hooks/queries/useServicesQuery";
 import { useAvailableTimeSlots } from "@/hooks/useAvailableTimeSlots";
 import { ServiceExtrasSelector } from "./ServiceExtrasSelector";
 import { formatCurrency } from "@/lib/utils";
@@ -57,7 +57,7 @@ export function AppointmentForm({
   loadingPets,
 }: AppointmentFormProps) {
   const [loading, setLoading] = useState(false);
-  const { services, loading: loadingServices } = useServices();
+  const { data: services, isLoading: loadingServices } = useServices();
 
   const form = useForm<AppointmentFormData>({
     resolver: zodResolver(appointmentSchema),
@@ -74,7 +74,7 @@ export function AppointmentForm({
   const selectedDate = form.watch("date");
   const selectedServiceId = form.watch("serviceId");
   const selectedService =
-    services.find((service) => service.id === selectedServiceId) || null;
+    services?.find((service) => service.id === selectedServiceId) || null;
 
   // Usar o hook para calcular horários disponíveis
   const {
@@ -261,13 +261,13 @@ export function AppointmentForm({
                         <SelectItem value="loading" disabled>
                           Carregando serviços...
                         </SelectItem>
-                      ) : services.length === 0 ? (
+                      ) : services?.length === 0 ? (
                         <SelectItem value="no-services" disabled>
                           Nenhum serviço cadastrado
                         </SelectItem>
                       ) : (
                         services
-                          .filter((service) => service.isActive)
+                          ?.filter((service) => service.isActive)
                           .map((service) => (
                             <SelectItem key={service.id} value={service.id}>
                               {service.name} - R$ {service.price.toFixed(2)}

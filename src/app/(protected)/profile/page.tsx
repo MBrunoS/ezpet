@@ -1,29 +1,52 @@
 "use client";
 
 import React, { useState } from "react";
-import { usePetShopProfile } from "@/hooks/usePetShopProfile";
+import {
+  usePetShopProfile,
+  useCreateProfile,
+  useUpdateProfile,
+} from "@/hooks/queries/usePetShopProfileQuery";
 import { ProfileForm } from "./components/ProfileForm";
 import { ProfileFormData } from "./schema";
-import { Settings, Save } from "lucide-react";
+import { Settings } from "lucide-react";
 
 export default function ProfilePage() {
-  const { profile, loading, saveProfile, updateProfile } = usePetShopProfile();
+  const { data: profile, isLoading } = usePetShopProfile();
+  const createProfileMutation = useCreateProfile();
+  const updateProfileMutation = useUpdateProfile();
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSubmit = async (data: ProfileFormData) => {
     setIsSaving(true);
     try {
       if (profile) {
-        await updateProfile(data);
+        updateProfileMutation.mutate(
+          { id: profile.id, data },
+          {
+            onSuccess: () => {
+              setIsSaving(false);
+            },
+            onError: () => {
+              setIsSaving(false);
+            },
+          }
+        );
       } else {
-        await saveProfile(data);
+        createProfileMutation.mutate(data, {
+          onSuccess: () => {
+            setIsSaving(false);
+          },
+          onError: () => {
+            setIsSaving(false);
+          },
+        });
       }
-    } finally {
+    } catch (error) {
       setIsSaving(false);
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="text-lg">Carregando configurações...</div>
@@ -51,7 +74,7 @@ export default function ProfilePage() {
       <div className="bg-white rounded-lg shadow">
         <div className="p-6">
           <ProfileForm
-            profile={profile}
+            profile={profile || null}
             onSubmit={handleSubmit}
             loading={isSaving}
           />

@@ -1,10 +1,15 @@
 "use client";
 
 import React, { useState } from "react";
-import { useAppointments } from "@/hooks/useAppointments";
-import { useClients } from "@/hooks/useClients";
-import { usePets } from "@/hooks/usePets";
-import { useServices } from "@/hooks/useServices";
+import {
+  useAppointments,
+  useAddAppointment,
+  useUpdateAppointment,
+  useDeleteAppointment,
+} from "@/hooks/queries/useAppointmentsQuery";
+import { useClients } from "@/hooks/queries/useClientsQuery";
+import { usePets } from "@/hooks/queries/usePetsQuery";
+import { useServices } from "@/hooks/queries/useServicesQuery";
 import { Appointment } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Plus, Calendar } from "lucide-react";
@@ -15,19 +20,15 @@ import { AppointmentFormData } from "./schema";
 import { toast } from "sonner";
 
 export default function AppointmentsPage() {
-  const {
-    appointments,
-    loading: loadingAppointments,
-    addAppointment,
-    updateAppointment,
-    removeAppointment,
-  } = useAppointments();
+  const { data: appointments, isLoading: loadingAppointments } =
+    useAppointments();
+  const addAppointmentMutation = useAddAppointment();
+  const updateAppointmentMutation = useUpdateAppointment();
+  const deleteAppointmentMutation = useDeleteAppointment();
 
-  const { clients, loading: loadingClients } = useClients();
-
-  const { pets, loading: loadingPets } = usePets();
-
-  const { services, loading: loadingServices } = useServices();
+  const { data: clients, isLoading: loadingClients } = useClients();
+  const { data: pets, isLoading: loadingPets } = usePets();
+  const { data: services, isLoading: loadingServices } = useServices();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [appointmentInEdit, setAppointmentInEdit] =
@@ -37,9 +38,9 @@ export default function AppointmentsPage() {
 
   const handleSubmit = async (data: AppointmentFormData) => {
     // Buscar informações do cliente, pet e serviço
-    const client = clients.find((c) => c.id === data.clientId);
-    const pet = pets.find((p) => p.id === data.petId);
-    const service = services.find((s) => s.id === data.serviceId);
+    const client = clients?.find((c) => c.id === data.clientId);
+    const pet = pets?.find((p) => p.id === data.petId);
+    const service = services?.find((s) => s.id === data.serviceId);
 
     if (!client || !pet || !service) {
       toast.error("Dados não encontrados");
@@ -54,7 +55,6 @@ export default function AppointmentsPage() {
     const totalPrice = service.price + extrasPrice;
 
     const appointmentData = {
-      userId: "", // Será preenchido pelo hook
       clientId: data.clientId,
       petId: data.petId,
       serviceId: data.serviceId,
@@ -70,21 +70,23 @@ export default function AppointmentsPage() {
     };
 
     if (appointmentInEdit) {
-      const success = await updateAppointment(
-        appointmentInEdit.id,
-        appointmentData
+      updateAppointmentMutation.mutate(
+        { id: appointmentInEdit.id, data: appointmentData },
+        {
+          onSuccess: () => {
+            toast.success("Agendamento atualizado com sucesso!");
+            setIsDialogOpen(false);
+            setAppointmentInEdit(null);
+          },
+        }
       );
-      if (success) {
-        toast.success("Agendamento atualizado com sucesso!");
-        setIsDialogOpen(false);
-        setAppointmentInEdit(null);
-      }
     } else {
-      const success = await addAppointment(appointmentData);
-      if (success) {
-        toast.success("Agendamento criado com sucesso!");
-        setIsDialogOpen(false);
-      }
+      addAppointmentMutation.mutate(appointmentData, {
+        onSuccess: () => {
+          toast.success("Agendamento criado com sucesso!");
+          setIsDialogOpen(false);
+        },
+      });
     }
   };
 
@@ -93,13 +95,14 @@ export default function AppointmentsPage() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (appointmentToDelete) {
-      const success = await removeAppointment(appointmentToDelete.id);
-      if (success) {
-        toast.success("Agendamento excluído com sucesso!");
-      }
-      setAppointmentToDelete(null);
+      deleteAppointmentMutation.mutate(appointmentToDelete.id, {
+        onSuccess: () => {
+          toast.success("Agendamento excluído com sucesso!");
+          setAppointmentToDelete(null);
+        },
+      });
     }
   };
 
@@ -142,12 +145,12 @@ export default function AppointmentsPage() {
           <div className="flex gap-2 items-center mb-4">
             <Calendar className="w-5 h-5 text-blue-600" />
             <h2 className="text-xl font-semibold">
-              Agendamentos ({appointments.length})
+              Agendamentos ({appointments?.length || 0})
             </h2>
           </div>
 
           <AppointmentTable
-            appointments={appointments}
+            appointments={appointments || []}
             onEdit={handleEdit}
             onDelete={setAppointmentToDelete}
           />
@@ -159,8 +162,8 @@ export default function AppointmentsPage() {
         onClose={closeDialog}
         onSubmit={handleSubmit}
         appointmentInEdit={appointmentInEdit}
-        clients={clients}
-        pets={pets}
+        clients={clients || []}
+        pets={pets || []}
         loadingPets={loadingPets}
       />
 
