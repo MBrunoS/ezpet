@@ -6,10 +6,13 @@ import {
   deleteDoc, 
   doc, 
   getDocs, 
+  query,
+  where,
   serverTimestamp 
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Product } from '../types';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface StockState {
   products: Product[];
@@ -27,15 +30,19 @@ interface StockMethods {
 }
 
 export function useStock(): StockState & StockMethods {
+  const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadProducts = async (): Promise<void> => {
+    if (!user) return;
+    
     setLoading(true);
     try {
       const productsRef = collection(db, 'products');
-      const snapshot = await getDocs(productsRef);
+      const q = query(productsRef, where('userId', '==', user.uid));
+      const snapshot = await getDocs(q);
       const productsData = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -49,9 +56,12 @@ export function useStock(): StockState & StockMethods {
   };
 
   const addProduct = async (product: Omit<Product, 'id'>): Promise<boolean> => {
+    if (!user) return false;
+    
     try {
       const newProduct = {
         ...product,
+        userId: user.uid,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       };
@@ -65,6 +75,8 @@ export function useStock(): StockState & StockMethods {
   };
 
   const updateProduct = async (id: string, updatedData: Partial<Product>): Promise<boolean> => {
+    if (!user) return false;
+    
     try {
       const productRef = doc(db, 'products', id);
       await updateDoc(productRef, {
@@ -80,6 +92,8 @@ export function useStock(): StockState & StockMethods {
   };
 
   const removeProduct = async (id: string): Promise<boolean> => {
+    if (!user) return false;
+    
     try {
       await deleteDoc(doc(db, 'products', id));
       await loadProducts();
@@ -91,6 +105,8 @@ export function useStock(): StockState & StockMethods {
   };
 
   const updateStock = async (id: string, quantity: number): Promise<boolean> => {
+    if (!user) return false;
+    
     try {
       const productRef = doc(db, 'products', id);
       await updateDoc(productRef, {
@@ -108,8 +124,10 @@ export function useStock(): StockState & StockMethods {
   const lowStockProducts = products.filter(p => p.quantity <= p.minStock);
 
   useEffect(() => {
-    loadProducts();
-  }, []);
+    if (user) {
+      loadProducts();
+    }
+  }, [user]);
 
   return {
     products,

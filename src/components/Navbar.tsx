@@ -24,7 +24,7 @@ export default function Navbar(): React.ReactElement {
   };
 
   return (
-    <header className="flex justify-between items-center px-10 py-3 whitespace-nowrap border-b border-solid border-b-border">
+    <header className="flex sticky top-0 z-50 justify-between items-center px-10 py-3 whitespace-nowrap border-b border-solid bg-background border-b-border">
       <div className="flex gap-4 items-center text-text">
         <SidebarTrigger />
         <h2 className="text-text text-lg font-bold leading-tight tracking-[-0.015em]">

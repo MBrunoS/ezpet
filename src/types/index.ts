@@ -1,5 +1,6 @@
 export interface Product {
   id: string;
+  userId: string;
   name: string;
   quantity: number;
   price: number;
@@ -19,6 +20,7 @@ export interface ServiceExtra {
 
 export interface Service {
   id: string;
+  userId: string;
   name: string;
   description?: string;
   price: number;
@@ -31,6 +33,7 @@ export interface Service {
 
 export interface Appointment {
   id: string;
+  userId: string;
   clientId: string;
   petId: string;
   serviceId: string; // Referência ao serviço
@@ -49,6 +52,7 @@ export interface Appointment {
 
 export interface Client {
   id: string;
+  userId: string;
   name: string;
   email: string;
   phone: string;
@@ -60,6 +64,7 @@ export interface Client {
 
 export interface Pet {
   id: string;
+  userId: string;
   clientId: string;
   name: string;
   species: string;

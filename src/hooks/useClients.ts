@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Client } from '../types';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ClientsState {
   clients: Client[];
@@ -30,15 +31,19 @@ interface ClientsMethods {
 }
 
 export function useClients(): ClientsState & ClientsMethods {
+  const { user } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadClients = async (): Promise<void> => {
+    if (!user) return;
+    
     setLoading(true);
     try {
       const clientsRef = collection(db, 'clients');
-      const snapshot = await getDocs(clientsRef);
+      const q = query(clientsRef, where('userId', '==', user.uid));
+      const snapshot = await getDocs(q);
       const clientsData = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -52,13 +57,18 @@ export function useClients(): ClientsState & ClientsMethods {
   };
 
   useEffect(() => {
-    loadClients();
-  }, []);
+    if (user) {
+      loadClients();
+    }
+  }, [user]);
 
   const addClient = async (client: Omit<Client, 'id' | 'petsCount'>): Promise<string | null> => {
+    if (!user) return null;
+    
     try {
       const newClient = {
         ...client,
+        userId: user.uid,
         petsCount: 0,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
@@ -73,6 +83,8 @@ export function useClients(): ClientsState & ClientsMethods {
   };
 
   const updateClient = async (id: string, updatedData: Partial<Client>): Promise<boolean> => {
+    if (!user) return false;
+    
     try {
       const clientRef = doc(db, 'clients', id);
       await updateDoc(clientRef, {
@@ -88,10 +100,12 @@ export function useClients(): ClientsState & ClientsMethods {
   };
 
   const removeClient = async (id: string): Promise<boolean> => {
+    if (!user) return false;
+    
     try {
       // Primeiro, buscar e remover todos os pets associados ao cliente
       const petsRef = collection(db, 'pets');
-      const petsQuery = query(petsRef, where('clientId', '==', id));
+      const petsQuery = query(petsRef, where('clientId', '==', id), where('userId', '==', user.uid));
       const petsSnapshot = await getDocs(petsQuery);
       
       // Remover todos os pets em lote
@@ -111,6 +125,8 @@ export function useClients(): ClientsState & ClientsMethods {
   };
 
   const incrementPetsCount = async (clientId: string): Promise<boolean> => {
+    if (!user) return false;
+    
     try {
       const clientRef = doc(db, 'clients', clientId);
       await updateDoc(clientRef, {
@@ -126,6 +142,8 @@ export function useClients(): ClientsState & ClientsMethods {
   };
 
   const decrementPetsCount = async (clientId: string): Promise<boolean> => {
+    if (!user) return false;
+    
     try {
       const clientRef = doc(db, 'clients', clientId);
       await updateDoc(clientRef, {

@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Appointment, Service } from '../types';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AppointmentsState {
   appointments: Appointment[];
@@ -31,15 +32,22 @@ interface AppointmentsMethods {
 }
 
 export function useAppointments(): AppointmentsState & AppointmentsMethods {
+  const { user } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadAppointments = useCallback(async (): Promise<void> => {
+    if (!user) return;
+    
     setLoading(true);
     try {
       const appointmentsRef = collection(db, 'appointments');
-      const q = query(appointmentsRef, orderBy('date', 'desc'));
+      const q = query(
+        appointmentsRef, 
+        where('userId', '==', user.uid),
+        orderBy('date', 'desc')
+      );
       const snapshot = await getDocs(q);
       const appointmentsData = snapshot.docs.map(doc => ({
         id: doc.id,
@@ -54,13 +62,15 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   const checkTimeSlotAvailability = useCallback(async (
     date: Date, 
     serviceDuration: number,
     excludeId?: string
   ): Promise<boolean> => {
+    if (!user) return false;
+    
     try {
       const startOfDay = new Date(date);
       startOfDay.setHours(0, 0, 0, 0);
@@ -70,6 +80,7 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
       const appointmentsRef = collection(db, 'appointments');
       const q = query(
         appointmentsRef,
+        where('userId', '==', user.uid),
         where('date', '>=', startOfDay),
         where('date', '<=', endOfDay),
         where('status', '!=', 'canceled')
@@ -103,9 +114,11 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
       console.error('Erro ao verificar disponibilidade:', err);
       return false;
     }
-  }, []);
+  }, [user]);
 
   const getAppointmentsByDate = useCallback(async (date: Date): Promise<Appointment[]> => {
+    if (!user) return [];
+    
     try {
       const startOfDay = new Date(date);
       startOfDay.setHours(0, 0, 0, 0);
@@ -115,6 +128,7 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
       const appointmentsRef = collection(db, 'appointments');
       const q = query(
         appointmentsRef,
+        where('userId', '==', user.uid),
         where('date', '>=', startOfDay),
         where('date', '<=', endOfDay),
         orderBy('date', 'asc')
@@ -132,9 +146,11 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
       console.error('Erro ao buscar agendamentos por data:', err);
       return [];
     }
-  }, []);
+  }, [user]);
 
   const addAppointment = useCallback(async (appointment: Omit<Appointment, 'id'>): Promise<boolean> => {
+    if (!user) return false;
+    
     try {
       // Por enquanto, usar duração padrão de 60 minutos
       // TODO: Buscar duração real do serviço
@@ -149,6 +165,7 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
 
       const newAppointment = {
         ...appointment,
+        userId: user.uid,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         status: 'scheduled'
@@ -160,9 +177,11 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
       setError(err instanceof Error ? err.message : 'An error occurred');
       return false;
     }
-  }, [loadAppointments, checkTimeSlotAvailability]);
+  }, [loadAppointments, checkTimeSlotAvailability, user]);
 
   const updateAppointment = useCallback(async (id: string, updatedData: Partial<Appointment>): Promise<boolean> => {
+    if (!user) return false;
+    
     try {
       // Se estiver atualizando a data/hora, verificar disponibilidade
       if (updatedData.date) {
@@ -191,6 +210,8 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
   }, [loadAppointments, checkTimeSlotAvailability]);
 
   const removeAppointment = useCallback(async (id: string): Promise<boolean> => {
+    if (!user) return false;
+    
     try {
       await deleteDoc(doc(db, 'appointments', id));
       await loadAppointments();
@@ -201,19 +222,22 @@ export function useAppointments(): AppointmentsState & AppointmentsMethods {
     }
   }, [loadAppointments]);
 
-  useEffect(() => {
-    loadAppointments();
-  }, [loadAppointments]);
-
+  // Calculate appointments for today
   const appointmentsToday = appointments.filter(appointment => {
     const today = new Date();
-    const appointmentDate = appointment.date;
-    
-    return appointmentDate && 
+    const appointmentDate = new Date(appointment.date);
+    return (
       appointmentDate.getDate() === today.getDate() &&
       appointmentDate.getMonth() === today.getMonth() &&
-      appointmentDate.getFullYear() === today.getFullYear();
+      appointmentDate.getFullYear() === today.getFullYear()
+    );
   });
+
+  useEffect(() => {
+    if (user) {
+      loadAppointments();
+    }
+  }, [loadAppointments]);
 
   return {
     appointments,

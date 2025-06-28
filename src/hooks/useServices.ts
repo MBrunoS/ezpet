@@ -13,6 +13,8 @@ import {
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Service } from '../types';
+import { useAuth } from '@/contexts/AuthContext';
+import { ServiceFormData } from '@/app/(protected)/services/schema';
 
 interface ServicesState {
   services: Service[];
@@ -25,7 +27,7 @@ type DeepPartial<T> = {
 };
 
 interface ServicesMethods {
-  addService: (service: Omit<Service, 'id'>) => Promise<boolean>;
+  addService: (service: ServiceFormData) => Promise<boolean>;
   updateService: (id: string, updatedData: DeepPartial<Service>) => Promise<boolean>;
   removeService: (id: string) => Promise<boolean>;
   loadServices: () => Promise<void>;
@@ -34,15 +36,22 @@ interface ServicesMethods {
 }
 
 export function useServices(): ServicesState & ServicesMethods {
+  const { user } = useAuth();
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadServices = useCallback(async (): Promise<void> => {
+    if (!user) return;
+    
     setLoading(true);
     try {
       const servicesRef = collection(db, 'services');
-      const q = query(servicesRef, orderBy('name', 'asc'));
+      const q = query(
+        servicesRef, 
+        where('userId', '==', user.uid),
+        orderBy('name', 'asc')
+      );
       const snapshot = await getDocs(q);
       const servicesData = snapshot.docs.map(doc => ({
         id: doc.id,
@@ -56,12 +65,15 @@ export function useServices(): ServicesState & ServicesMethods {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
-  const addService = useCallback(async (service: Omit<Service, 'id'>): Promise<boolean> => {
+  const addService = useCallback(async (service: ServiceFormData): Promise<boolean> => {
+    if (!user) return false;
+    
     try {
       const newService = {
         ...service,
+        userId: user.uid,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         isActive: true
@@ -73,9 +85,11 @@ export function useServices(): ServicesState & ServicesMethods {
       setError(err instanceof Error ? err.message : 'An error occurred');
       return false;
     }
-  }, [loadServices]);
+  }, [loadServices, user]);
 
   const updateService = useCallback(async (id: string, updatedData: DeepPartial<Service>): Promise<boolean> => {
+    if (!user) return false;
+    
     try {
       const serviceRef = doc(db, 'services', id);
       await updateDoc(serviceRef, {
@@ -91,6 +105,8 @@ export function useServices(): ServicesState & ServicesMethods {
   }, [loadServices]);
 
   const removeService = useCallback(async (id: string): Promise<boolean> => {
+    if (!user) return false;
+    
     try {
       await deleteDoc(doc(db, 'services', id));
       await loadServices();
@@ -110,7 +126,9 @@ export function useServices(): ServicesState & ServicesMethods {
   }, [services]);
 
   useEffect(() => {
-    loadServices();
+    if (user) {
+      loadServices();
+    }
   }, [loadServices]);
 
   return {
