@@ -79,7 +79,7 @@ export function useAddProduct() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: stockKeys.lists() });
       queryClient.invalidateQueries({ queryKey: stockKeys.lowStock(user!.uid) });
-      toast.success('Produto criado com sucesso!');
+      toast.success('Produto cadastrado com sucesso!');
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : 'Erro ao criar produto');

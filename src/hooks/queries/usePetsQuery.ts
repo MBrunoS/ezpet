@@ -88,7 +88,7 @@ export function useAddPet() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: petKeys.lists() });
       queryClient.invalidateQueries({ queryKey: petKeys.byClient(variables.clientId) });
-      toast.success('Pet criado com sucesso!');
+      toast.success('Pet cadastrado com sucesso!');
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : 'Erro ao criar pet');

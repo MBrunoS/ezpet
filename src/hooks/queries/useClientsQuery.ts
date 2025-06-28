@@ -66,7 +66,7 @@ export function useAddClient() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: clientKeys.lists() });
-      toast.success('Cliente criado com sucesso!');
+      toast.success('Cliente cadastrado com sucesso!');
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : 'Erro ao criar cliente');

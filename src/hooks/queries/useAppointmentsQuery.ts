@@ -116,7 +116,7 @@ export function useAddAppointment() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: appointmentKeys.lists() });
-      toast.success('Agendamento criado com sucesso!');
+      toast.success('Agendamento cadastrado com sucesso!');
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : 'Erro ao criar agendamento');

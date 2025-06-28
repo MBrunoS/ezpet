@@ -66,7 +66,7 @@ export function useCreateProfile() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: profileKeys.details() });
-      toast.success('Perfil criado com sucesso!');
+      toast.success('Perfil cadastrado com sucesso!');
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : 'Erro ao criar perfil');

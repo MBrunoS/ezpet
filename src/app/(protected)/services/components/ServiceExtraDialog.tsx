@@ -41,6 +41,7 @@ export function ServiceExtraDialog({
   const form = useForm<ServiceExtraFormData>({
     resolver: zodResolver(serviceExtraSchema),
     defaultValues: {
+      id: "",
       name: "",
       price: 0,
       description: "",
@@ -51,12 +52,14 @@ export function ServiceExtraDialog({
   useEffect(() => {
     if (editingExtra && isOpen) {
       form.reset({
+        id: editingExtra.id,
         name: editingExtra.name,
         price: editingExtra.price,
         description: editingExtra.description || "",
       });
     } else if (!editingExtra && isOpen) {
       form.reset({
+        id: "",
         name: "",
         price: 0,
         description: "",

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const serviceExtraSchema = z.object({
-  id: z.string().optional(),
+  id: z.string(),
   name: z.string().min(1, "Nome do extra é obrigatório"),
   price: z.number().min(0, "Preço deve ser maior ou igual a zero"),
   description: z.string().optional(),

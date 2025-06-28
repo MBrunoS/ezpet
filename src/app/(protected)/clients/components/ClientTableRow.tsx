@@ -5,6 +5,7 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2, PawPrint } from "lucide-react";
 import { Client } from "@/types";
+import { formatPhone } from "@/lib/utils";
 
 interface ClientTableRowProps {
   client: Client;
@@ -25,11 +26,11 @@ export function ClientTableRow({
           <div className="text-sm text-gray-500">{client.email}</div>
         </div>
       </TableCell>
-      <TableCell>{client.phone}</TableCell>
+      <TableCell>{formatPhone(client.phone)}</TableCell>
       <TableCell>
         {client.address ? (
           <div className="max-w-xs text-sm text-gray-600 truncate">
-            {client.address}
+            {`${client.address.street}, ${client.address.number} - ${client.address.neighborhood}, ${client.address.city}/${client.address.state}`}
           </div>
         ) : (
           <span className="text-sm text-gray-400">Não informado</span>

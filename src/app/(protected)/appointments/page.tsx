@@ -83,7 +83,7 @@ export default function AppointmentsPage() {
     } else {
       addAppointmentMutation.mutate(appointmentData, {
         onSuccess: () => {
-          toast.success("Agendamento criado com sucesso!");
+          toast.success("Agendamento cadastrado com sucesso!");
           setIsDialogOpen(false);
         },
       });

@@ -1,4 +1,4 @@
-interface Address {
+export interface Address {
   street: string;
   number: string;
   complement?: string;
@@ -66,7 +66,7 @@ export interface Client {
   name: string;
   email: string;
   phone: string;
-  address?: string;
+  address: Address;
   petsCount: number;
   createdAt?: Date;
   updatedAt?: Date;

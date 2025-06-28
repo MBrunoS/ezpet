@@ -3,9 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useHookFormMask } from "use-mask-input";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -14,18 +13,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
 import { clientSchema, ClientFormData, PetFormData } from "../schema";
 import { Pet } from "@/types";
-import { PetForm } from "./PetForm";
-import { Plus, Users } from "lucide-react";
+import { PetDialog } from "./PetDialog";
+import { ClientDataSection } from "./ClientDataSection";
+import { ClientAddressSection } from "./ClientAddressSection";
+import { PetsSection } from "./PetsSection";
 import {
   usePetsByClient,
   useAddPet,
@@ -53,7 +47,7 @@ export function ClientForm({
 }: ClientFormProps) {
   // Estado local só para pets temporários de novo cliente
   const [tempPets, setTempPets] = useState<Pet[]>([]);
-  const [showPetForm, setShowPetForm] = useState(false);
+  const [isPetDialogOpen, setIsPetDialogOpen] = useState(false);
   const [editingPet, setEditingPet] = useState<Pet | null>(null);
 
   const addPetMutation = useAddPet();
@@ -71,9 +65,19 @@ export function ClientForm({
       name: "",
       email: "",
       phone: "",
-      address: "",
+      address: {
+        street: "",
+        number: "",
+        complement: "",
+        neighborhood: "",
+        city: "",
+        state: "",
+        zipCode: "",
+      },
     },
   });
+
+  const registerWithMask = useHookFormMask(form.register);
 
   // Preencher formulário quando estiver editando
   useEffect(() => {
@@ -82,14 +86,30 @@ export function ClientForm({
         name: clientInEdit.name,
         email: clientInEdit.email,
         phone: clientInEdit.phone,
-        address: clientInEdit.address || "",
+        address: clientInEdit.address || {
+          street: "",
+          number: "",
+          complement: "",
+          neighborhood: "",
+          city: "",
+          state: "",
+          zipCode: "",
+        },
       });
     } else if (!clientInEdit && isOpen) {
       form.reset({
         name: "",
         email: "",
         phone: "",
-        address: "",
+        address: {
+          street: "",
+          number: "",
+          complement: "",
+          neighborhood: "",
+          city: "",
+          state: "",
+          zipCode: "",
+        },
       });
       setTempPets([]);
     }
@@ -106,11 +126,11 @@ export function ClientForm({
   const handleClose = () => {
     onClose();
     setTempPets([]);
-    setShowPetForm(false);
+    setIsPetDialogOpen(false);
     setEditingPet(null);
   };
 
-  const handleSavePet = async (petData: PetFormData) => {
+  const handlePetSubmit = async (petData: PetFormData) => {
     if (editingPet) {
       // Atualizar pet existente
       if (clientInEdit) {
@@ -149,12 +169,12 @@ export function ClientForm({
       };
       setTempPets([...tempPets, tempPet]);
     }
-    setShowPetForm(false);
+    setIsPetDialogOpen(false);
   };
 
   const handleEditPet = (pet: Pet) => {
     setEditingPet(pet);
-    setShowPetForm(true);
+    setIsPetDialogOpen(true);
   };
 
   const handleRemovePet = async (pet: Pet) => {
@@ -174,182 +194,74 @@ export function ClientForm({
     }
   };
 
-  const cancelPetForm = () => {
-    setShowPetForm(false);
+  const handlePetDialogClose = () => {
+    setIsPetDialogOpen(false);
     setEditingPet(null);
   };
 
+  const handleAddPet = () => {
+    setEditingPet(null);
+    setIsPetDialogOpen(true);
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {clientInEdit ? "Editar Cliente" : "Novo Cliente"}
-          </DialogTitle>
-          <DialogDescription>
-            {clientInEdit
-              ? "Atualize as informações do cliente"
-              : "Adicione um novo cliente e seus pets"}
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>
+              {clientInEdit ? "Editar Cliente" : "Novo Cliente"}
+            </DialogTitle>
+            <DialogDescription>
+              {clientInEdit
+                ? "Atualize as informações do cliente"
+                : "Adicione um novo cliente e seus pets"}
+            </DialogDescription>
+          </DialogHeader>
 
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-6"
-          >
-            {/* Dados do Cliente */}
-            <div className="space-y-4">
-              <h3 className="flex gap-2 items-center text-lg font-semibold">
-                <Users className="w-5 h-5" />
-                Dados do Cliente
-              </h3>
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome Completo</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ex: João Silva" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="email"
-                          placeholder="joao@email.com"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Telefone</FormLabel>
-                      <FormControl>
-                        <Input placeholder="(11) 99999-9999" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="overflow-y-auto flex-1 pr-2 space-y-6"
+            >
+              <ClientDataSection
                 control={form.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Endereço</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Endereço completo..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                registerWithMask={registerWithMask}
               />
-            </div>
 
-            {/* Seção de Pets */}
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold">Pets ({pets.length})</h3>
-                <Button
-                  type="button"
-                  onClick={() => setShowPetForm(true)}
-                  className="flex gap-2 items-center"
-                >
-                  <Plus className="w-4 h-4" />
-                  Adicionar Pet
-                </Button>
-              </div>
+              <ClientAddressSection
+                control={form.control}
+                registerWithMask={registerWithMask}
+              />
 
-              {pets.length === 0 && !showPetForm && (
-                <div className="py-8 text-center text-gray-500">
-                  Nenhum pet cadastrado. Clique em "Adicionar Pet" para começar.
-                </div>
-              )}
+              <PetsSection
+                pets={pets}
+                onAddPet={handleAddPet}
+                onEditPet={handleEditPet}
+                onRemovePet={handleRemovePet}
+              />
+            </form>
+          </Form>
 
-              {/* Lista de Pets */}
-              {pets.length > 0 && (
-                <div className="space-y-3">
-                  {pets.map((pet) => (
-                    <div
-                      key={pet.id}
-                      className="flex justify-between items-center p-3 bg-white rounded-lg border"
-                    >
-                      <div>
-                        <div className="font-medium">{pet.name}</div>
-                        <div className="text-sm text-gray-600">
-                          {pet.species} • {pet.breed} • {pet.age} anos •{" "}
-                          {pet.weight}kg
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEditPet(pet)}
-                        >
-                          Editar
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleRemovePet(pet)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          Remover
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Formulário de Pet */}
-              {showPetForm && (
-                <PetForm
-                  pet={editingPet}
-                  onSave={handleSavePet}
-                  onCancel={cancelPetForm}
-                />
-              )}
-            </div>
-
-            <DialogFooter>
+          <DialogFooter className="gap-3 pt-3 mt-3 border-t">
+            <div className="flex flex-col gap-2 justify-end mt-2 sm:flex-row">
               <Button type="button" variant="outline" onClick={handleClose}>
                 Cancelar
               </Button>
-              <Button type="submit">
+              <Button type="submit" onClick={form.handleSubmit(handleSubmit)}>
                 {clientInEdit ? "Atualizar" : "Cadastrar"}
               </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <PetDialog
+        isOpen={isPetDialogOpen}
+        onClose={handlePetDialogClose}
+        onSubmit={handlePetSubmit}
+        editingPet={editingPet}
+      />
+    </>
   );
 }

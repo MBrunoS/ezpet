@@ -72,7 +72,7 @@ export function useAddService() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: serviceKeys.lists() });
-      toast.success('Serviço criado com sucesso!');
+      toast.success('Serviço cadastrado com sucesso!');
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : 'Erro ao criar serviço');
