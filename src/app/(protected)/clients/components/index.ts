@@ -1,8 +1,6 @@
 export { ClientForm } from "./ClientForm";
 export { ClientTable } from "./ClientTable";
 export { ClientTableRow } from "./ClientTableRow";
-export { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
-export { PetForm } from "./PetForm";
 export { PetDialog } from "./PetDialog";
 export { ClientDataSection } from "./ClientDataSection";
 export { ClientAddressSection } from "./ClientAddressSection";

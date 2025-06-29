@@ -1,44 +1,24 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import {
-  useStock,
-  useAddProduct,
-  useUpdateProduct,
-  useDeleteProduct,
-  useStockMovements,
-  useStockMovement,
-} from "@/hooks/queries/useStockQuery";
+import { useStock, useStockMovements } from "@/hooks/queries/useStockQuery";
 import { Product } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Plus, Package, ArrowUpDown } from "lucide-react";
-import { ProductFormData, StockMovementFormData } from "./schema";
 import {
-  ProductForm,
   ProductTable,
-  DeleteConfirmationDialog,
-  StockMovementForm,
-  StockMovementsTable,
   ProductFilters,
+  StockMovementsTable,
 } from "./components";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { filterProducts } from "./utils/filterProducts";
+import { useDialogActions } from "@/contexts/DialogContext";
 
 export default function StockPage() {
   const { data: products, isLoading } = useStock();
   const { data: movements, isLoading: movementsLoading } = useStockMovements();
-  const addProductMutation = useAddProduct();
-  const updateProductMutation = useUpdateProduct();
-  const deleteProductMutation = useDeleteProduct();
-  const stockMovementMutation = useStockMovement();
-
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isMovementFormOpen, setIsMovementFormOpen] = useState(false);
-  const [productInEdit, setProductInEdit] = useState<Product | null>(null);
-  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
-  const [preselectedProduct, setPreselectedProduct] = useState<Product | null>(
-    null
-  );
+  const { openProductForm, openDeleteConfirmation, openStockMovementForm } =
+    useDialogActions();
 
   // Estados para filtros
   const [searchTerm, setSearchTerm] = useState("");
@@ -50,86 +30,28 @@ export default function StockPage() {
     return filterProducts(products, searchTerm, statusFilter);
   }, [products, searchTerm, statusFilter]);
 
-  const handleSubmit = async (data: ProductFormData) => {
-    if (productInEdit) {
-      updateProductMutation.mutate(
-        { id: productInEdit.id, data },
-        {
-          onSuccess: () => {
-            setIsFormOpen(false);
-            setProductInEdit(null);
-          },
-        }
-      );
-    } else {
-      addProductMutation.mutate(data, {
-        onSuccess: () => {
-          setIsFormOpen(false);
-        },
-      });
-    }
-  };
-
-  const handleMovementSubmit = async (data: StockMovementFormData) => {
-    const selectedProduct = products?.find((p) => p.id === data.productId);
-    if (!selectedProduct) return;
-
-    stockMovementMutation.mutate(
-      {
-        productId: data.productId,
-        productName: selectedProduct.name,
-        type: data.type,
-        quantity: data.quantity,
-        reason: data.reason,
-        observation: data.observation,
-      },
-      {
-        onSuccess: () => {
-          setIsMovementFormOpen(false);
-          setPreselectedProduct(null);
-        },
-      }
-    );
-  };
-
   const handleEdit = (product: Product) => {
-    setProductInEdit(product);
-    setIsFormOpen(true);
+    openProductForm(product);
   };
 
-  const handleDelete = () => {
-    if (productToDelete) {
-      deleteProductMutation.mutate(productToDelete.id, {
-        onSuccess: () => {
-          setProductToDelete(null);
-        },
-      });
-    }
+  const handleDelete = (product: Product) => {
+    openDeleteConfirmation({
+      id: product.id,
+      name: product.name,
+      type: "produto",
+    });
   };
 
   const openNewForm = () => {
-    setProductInEdit(null);
-    setIsFormOpen(true);
+    openProductForm();
   };
 
   const openMovementForm = () => {
-    setPreselectedProduct(null);
-    setIsMovementFormOpen(true);
+    openStockMovementForm();
   };
 
   const openMovementFormForProduct = (product: Product) => {
-    setPreselectedProduct(product);
-    setIsMovementFormOpen(true);
-  };
-
-  const closeForm = () => {
-    setIsFormOpen(false);
-    setProductInEdit(null);
-  };
-
-  const closeMovementForm = () => {
-    setIsMovementFormOpen(false);
-    setPreselectedProduct(null);
+    openStockMovementForm(product);
   };
 
   if (isLoading) {
@@ -233,35 +155,13 @@ export default function StockPage() {
               <ProductTable
                 products={filteredProducts}
                 onEdit={handleEdit}
-                onDelete={setProductToDelete}
+                onDelete={handleDelete}
                 onMovement={openMovementFormForProduct}
               />
             </div>
           </div>
         </TabsContent>
       </Tabs>
-
-      <ProductForm
-        isOpen={isFormOpen}
-        onClose={closeForm}
-        onSubmit={handleSubmit}
-        product={productInEdit}
-      />
-
-      <StockMovementForm
-        isOpen={isMovementFormOpen}
-        onClose={closeMovementForm}
-        onSubmit={handleMovementSubmit}
-        products={products || []}
-        preselectedProduct={preselectedProduct}
-      />
-
-      <DeleteConfirmationDialog
-        product={productToDelete}
-        isOpen={!!productToDelete}
-        onConfirm={handleDelete}
-        onClose={() => setProductToDelete(null)}
-      />
     </div>
   );
 }

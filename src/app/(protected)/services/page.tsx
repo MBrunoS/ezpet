@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import {
   useServices,
   useAddService,
@@ -12,8 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Plus, Settings } from "lucide-react";
 import { ServiceForm } from "./components/ServiceForm";
 import { ServiceTable } from "./components/ServiceTable";
-import { DeleteConfirmationDialog } from "./components/DeleteConfirmationDialog";
 import { ServiceFormData } from "./schema";
+import { useDialog } from "@/contexts/DialogContext";
 
 export default function ServicesPage() {
   const { data: services, isLoading, error } = useServices();
@@ -21,56 +21,37 @@ export default function ServicesPage() {
   const updateServiceMutation = useUpdateService();
   const deleteServiceMutation = useDeleteService();
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [serviceInEdit, setServiceInEdit] = useState<Service | null>(null);
-  const [serviceToDelete, setServiceToDelete] = useState<Service | null>(null);
+  const { openDialog, closeDialog } = useDialog();
 
   if (isLoading) return <div>Carregando...</div>;
   if (error) return <div>Erro: {error.message}</div>;
 
   const handleSubmit = async (data: ServiceFormData) => {
-    if (serviceInEdit) {
-      updateServiceMutation.mutate(
-        { id: serviceInEdit.id, data },
-        {
-          onSuccess: () => {
-            setIsDialogOpen(false);
-            setServiceInEdit(null);
-          },
-        }
-      );
-    } else {
-      addServiceMutation.mutate(data, {
-        onSuccess: () => {
-          setIsDialogOpen(false);
-        },
-      });
-    }
+    // O service será passado via contexto do GlobalDialogs
+    // Esta função será chamada pelo ServiceForm que já tem acesso ao service
+
+    // Criando novo serviço
+    addServiceMutation.mutate(data, {
+      onSuccess: () => {
+        closeDialog();
+      },
+    });
   };
 
   const handleEdit = (service: Service) => {
-    setServiceInEdit(service);
-    setIsDialogOpen(true);
+    openDialog("service-form", { service });
   };
 
-  const handleDelete = () => {
-    if (serviceToDelete) {
-      deleteServiceMutation.mutate(serviceToDelete.id, {
-        onSuccess: () => {
-          setServiceToDelete(null);
-        },
-      });
-    }
+  const handleDelete = (service: Service) => {
+    deleteServiceMutation.mutate(service.id, {
+      onSuccess: () => {
+        closeDialog();
+      },
+    });
   };
 
   const openNewDialog = () => {
-    setServiceInEdit(null);
-    setIsDialogOpen(true);
-  };
-
-  const closeDialog = () => {
-    setIsDialogOpen(false);
-    setServiceInEdit(null);
+    openDialog("service-form", { service: undefined });
   };
 
   return (
@@ -98,23 +79,17 @@ export default function ServicesPage() {
           <ServiceTable
             services={services || []}
             onEdit={handleEdit}
-            onDelete={setServiceToDelete}
+            onDelete={(service) =>
+              openDialog("delete-confirmation", {
+                id: service.id,
+                name: service.name,
+                type: "serviço",
+                onConfirm: () => handleDelete(service),
+              })
+            }
           />
         </div>
       </div>
-
-      <ServiceForm
-        isOpen={isDialogOpen}
-        onClose={closeDialog}
-        onSubmit={handleSubmit}
-        serviceInEdit={serviceInEdit}
-      />
-
-      <DeleteConfirmationDialog
-        service={serviceToDelete}
-        onConfirm={handleDelete}
-        onCancel={() => setServiceToDelete(null)}
-      />
     </div>
   );
 }

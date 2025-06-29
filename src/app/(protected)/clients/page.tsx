@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import {
   useClients,
   useAddClient,
@@ -13,12 +13,9 @@ import { useAddPet, useDeletePet } from "@/hooks/queries/usePetsQuery";
 import { Client, Pet } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Plus, Users } from "lucide-react";
-import {
-  ClientForm,
-  ClientTable,
-  DeleteConfirmationDialog,
-} from "./components";
+import { ClientForm, ClientTable } from "./components";
 import { ClientFormData } from "./schema";
+import { useDialog } from "@/contexts/DialogContext";
 
 export default function ClientsPage() {
   const { data: clients, isLoading: loadingClients } = useClients();
@@ -31,84 +28,52 @@ export default function ClientsPage() {
   const addPetMutation = useAddPet();
   const deletePetMutation = useDeletePet();
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [clientInEdit, setClientInEdit] = useState<Client | null>(null);
-  const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
+  const { openDialog, closeDialog } = useDialog();
 
   const handleSubmit = async (data: ClientFormData, tempPets: Pet[] = []) => {
-    if (clientInEdit) {
-      updateClientMutation.mutate(
-        { id: clientInEdit.id, data },
-        {
-          onSuccess: () => {
-            setIsDialogOpen(false);
-            setClientInEdit(null);
-          },
-        }
-      );
-    } else {
-      addClientMutation.mutate(data, {
-        onSuccess: (docRef) => {
-          // Salvar os pets temporários para o novo cliente
-          if (tempPets.length > 0 && docRef) {
-            const newClientId = docRef.id;
-            // Salvar cada pet temporário
-            for (const tempPet of tempPets) {
-              if (tempPet.id.startsWith("temp-")) {
-                const { id, clientId, ...petData } = tempPet;
-                addPetMutation.mutate(
-                  { ...petData, clientId: newClientId },
-                  {
-                    onSuccess: () => {
-                      incrementPetsCountMutation.mutate(newClientId);
-                    },
-                  }
-                );
-              }
+    // O clientInEdit será passado via contexto do GlobalDialogs
+    // Esta função será chamada pelo ClientForm que já tem acesso ao clientInEdit
+
+    // Criando novo cliente
+    addClientMutation.mutate(data, {
+      onSuccess: (docRef) => {
+        // Salvar os pets temporários para o novo cliente
+        if (tempPets.length > 0 && docRef) {
+          const newClientId = docRef.id;
+          // Salvar cada pet temporário
+          for (const tempPet of tempPets) {
+            if (tempPet.id.startsWith("temp-")) {
+              const { id, clientId, ...petData } = tempPet;
+              addPetMutation.mutate(
+                { ...petData, clientId: newClientId },
+                {
+                  onSuccess: () => {
+                    incrementPetsCountMutation.mutate(newClientId);
+                  },
+                }
+              );
             }
           }
-          setIsDialogOpen(false);
-        },
-      });
-    }
+        }
+        closeDialog();
+      },
+    });
   };
 
   const handleEdit = (client: Client) => {
-    setClientInEdit(client);
-    setIsDialogOpen(true);
+    openDialog("client-form", { client });
   };
 
-  const handleDelete = () => {
-    if (clientToDelete) {
-      deleteClientMutation.mutate(clientToDelete.id, {
-        onSuccess: () => {
-          setClientToDelete(null);
-        },
-      });
-    }
+  const handleDelete = (client: Client) => {
+    deleteClientMutation.mutate(client.id, {
+      onSuccess: () => {
+        closeDialog();
+      },
+    });
   };
 
   const openNewDialog = () => {
-    setClientInEdit(null);
-    setIsDialogOpen(true);
-  };
-
-  const closeDialog = () => {
-    setIsDialogOpen(false);
-    setClientInEdit(null);
-  };
-
-  // Funções wrapper para capturar o clientId
-  const handlePetAdded = () => {
-    if (clientInEdit) {
-      incrementPetsCountMutation.mutate(clientInEdit.id);
-    }
-  };
-
-  const handlePetRemoved = () => {
-    if (clientInEdit) {
-      decrementPetsCountMutation.mutate(clientInEdit.id);
-    }
+    openDialog("client-form", { client: undefined });
   };
 
   if (loadingClients) {
@@ -144,25 +109,17 @@ export default function ClientsPage() {
           <ClientTable
             clients={clients || []}
             onEdit={handleEdit}
-            onDelete={setClientToDelete}
+            onDelete={(client) =>
+              openDialog("delete-confirmation", {
+                id: client.id,
+                name: client.name,
+                type: "cliente",
+                onConfirm: () => handleDelete(client),
+              })
+            }
           />
         </div>
       </div>
-
-      <ClientForm
-        isOpen={isDialogOpen}
-        onClose={closeDialog}
-        onSubmit={handleSubmit}
-        clientInEdit={clientInEdit}
-        onPetAdded={handlePetAdded}
-        onPetRemoved={handlePetRemoved}
-      />
-
-      <DeleteConfirmationDialog
-        client={clientToDelete}
-        onConfirm={handleDelete}
-        onCancel={() => setClientToDelete(null)}
-      />
     </div>
   );
 }

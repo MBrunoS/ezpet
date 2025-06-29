@@ -10,17 +10,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Product } from "@/types";
 
 interface DeleteConfirmationDialogProps {
-  product: Product | null;
+  item: { id: string; name: string; type: string } | null;
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
 }
 
 export function DeleteConfirmationDialog({
-  product,
+  item,
   isOpen,
   onClose,
   onConfirm,
@@ -31,7 +30,7 @@ export function DeleteConfirmationDialog({
         <DialogHeader>
           <DialogTitle>Confirmar Exclusão</DialogTitle>
           <DialogDescription>
-            Tem certeza que deseja excluir o produto "{product?.name}"? Esta
+            Tem certeza que deseja excluir o {item?.type} "{item?.name}"? Esta
             ação não pode ser desfeita.
           </DialogDescription>
         </DialogHeader>

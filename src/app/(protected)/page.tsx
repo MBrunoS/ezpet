@@ -11,11 +11,9 @@ import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { AppointmentDetailsDialog } from "@/components/ui/appointment-details-dialog";
-import { AppointmentForm } from "@/app/(protected)/appointments/components/AppointmentForm";
-import { DeleteConfirmationDialog } from "@/app/(protected)/appointments/components/DeleteConfirmationDialog";
-import { useAppointmentActions } from "@/hooks/useAppointmentActions";
 import { Plus, Users, Calendar as CalendarIcon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDialog } from "@/contexts/DialogContext";
 
 export default function Home() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -29,24 +27,7 @@ export default function Home() {
   const { data: lowStockProducts, isLoading: stockLoading } =
     useLowStockProducts();
 
-  const {
-    selectedAppointment,
-    isDetailsDialogOpen,
-    isFormDialogOpen,
-    appointmentToDelete,
-    setAppointmentToDelete,
-    handleAppointmentClick,
-    handleEditAppointment,
-    handleDeleteAppointment,
-    handleFormSubmit,
-    handleConfirmDelete,
-    closeDetailsDialog,
-    closeFormDialog,
-  } = useAppointmentActions({
-    clients,
-    pets,
-    services,
-  });
+  const { openDialog } = useDialog();
 
   // Filtrar agendamentos futuros
   const upcomingAppointments =
@@ -65,6 +46,18 @@ export default function Home() {
     petsLoading ||
     servicesLoading;
 
+  const handleAppointmentClick = (appointment: any) => {
+    openDialog("appointment-details", { appointment });
+  };
+
+  const handleNewClient = () => {
+    openDialog("client-form", { client: undefined });
+  };
+
+  const handleNewAppointment = () => {
+    openDialog("appointment-form", { appointment: undefined });
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -80,11 +73,17 @@ export default function Home() {
           Bem-vindo{user?.displayName ? `, ${user?.displayName}` : ""}!
         </p>
         <div className="flex flex-wrap gap-3">
-          <Button className="flex gap-2 items-center px-6 py-3">
+          <Button
+            onClick={handleNewClient}
+            className="flex gap-2 items-center px-6 py-3"
+          >
             <Users className="w-4 h-4" />
             <span>Cadastrar Cliente</span>
           </Button>
-          <Button className="flex gap-2 items-center px-6 py-3">
+          <Button
+            onClick={handleNewAppointment}
+            className="flex gap-2 items-center px-6 py-3"
+          >
             <CalendarIcon className="w-4 h-4" />
             <span>Novo Agendamento</span>
           </Button>
@@ -162,31 +161,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-
-      {/* Dialogs */}
-      <AppointmentDetailsDialog
-        appointment={selectedAppointment}
-        isOpen={isDetailsDialogOpen}
-        onClose={closeDetailsDialog}
-        onEdit={handleEditAppointment}
-        onDelete={handleDeleteAppointment}
-      />
-
-      <AppointmentForm
-        isOpen={isFormDialogOpen}
-        onClose={closeFormDialog}
-        onSubmit={handleFormSubmit}
-        appointmentInEdit={selectedAppointment}
-        clients={clients || []}
-        pets={pets || []}
-        loadingPets={petsLoading}
-      />
-
-      <DeleteConfirmationDialog
-        appointment={appointmentToDelete}
-        onConfirm={handleConfirmDelete}
-        onCancel={() => setAppointmentToDelete(null)}
-      />
     </div>
   );
 }
