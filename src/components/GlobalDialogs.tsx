@@ -136,7 +136,6 @@ export function GlobalDialogs() {
         {
           onSuccess: () => {
             closeDialog();
-            toast.success("Produto atualizado com sucesso!");
           },
         }
       );
@@ -144,7 +143,6 @@ export function GlobalDialogs() {
       addProductMutation.mutate(data, {
         onSuccess: () => {
           closeDialog();
-          toast.success("Produto cadastrado com sucesso!");
         },
       });
     }
@@ -167,7 +165,6 @@ export function GlobalDialogs() {
         {
           onSuccess: () => {
             closeDialog();
-            toast.success("Cliente atualizado com sucesso!");
           },
         }
       );
@@ -179,7 +176,6 @@ export function GlobalDialogs() {
             // TODO: Implementar salvamento de pets
           }
           closeDialog();
-          toast.success("Cliente cadastrado com sucesso!");
         },
       });
     }
@@ -199,7 +195,6 @@ export function GlobalDialogs() {
         {
           onSuccess: () => {
             closeDialog();
-            toast.success("Serviço atualizado com sucesso!");
           },
         }
       );
@@ -207,7 +202,6 @@ export function GlobalDialogs() {
       addServiceMutation.mutate(data, {
         onSuccess: () => {
           closeDialog();
-          toast.success("Serviço cadastrado com sucesso!");
         },
       });
     }
@@ -227,7 +221,6 @@ export function GlobalDialogs() {
         {
           onSuccess: () => {
             closeDialog();
-            toast.success("Agendamento atualizado com sucesso!");
           },
         }
       );
@@ -249,7 +242,6 @@ export function GlobalDialogs() {
       addAppointmentMutation.mutate(appointmentData, {
         onSuccess: () => {
           closeDialog();
-          toast.success("Agendamento cadastrado com sucesso!");
         },
       });
     }
@@ -271,7 +263,6 @@ export function GlobalDialogs() {
       {
         onSuccess: () => {
           closeDialog();
-          toast.success("Movimentação registrada com sucesso!");
         },
       }
     );
@@ -286,14 +277,11 @@ export function GlobalDialogs() {
     // Executar callback de confirmação se fornecido
     if (state.data.onConfirm) {
       state.data.onConfirm();
+      closeDialog(); // Fechar o diálogo após executar o callback
     } else {
-      // Fallback para produtos (comportamento padrão)
-      deleteProductMutation.mutate(state.data.id, {
-        onSuccess: () => {
-          closeDialog();
-          toast.success("Item excluído com sucesso!");
-        },
-      });
+      // Se não há callback, apenas fechar o diálogo
+      console.warn("No onConfirm callback provided for delete confirmation");
+      closeDialog();
     }
   };
 
@@ -314,7 +302,6 @@ export function GlobalDialogs() {
         deleteAppointmentMutation.mutate(appointment.id, {
           onSuccess: () => {
             closeDialog();
-            toast.success("Agendamento excluído com sucesso!");
           },
         });
       },

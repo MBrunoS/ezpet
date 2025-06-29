@@ -158,6 +158,7 @@ export function ProductForm({
                         type="number"
                         step="0.01"
                         placeholder="0,00"
+                        min="0"
                         {...field}
                         onChange={(e) =>
                           field.onChange(parseFloat(e.target.value) || 0)

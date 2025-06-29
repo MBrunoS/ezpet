@@ -4,6 +4,7 @@ import React from "react";
 import {
   useAppointments,
   useAddAppointment,
+  useDeleteAppointment,
 } from "@/hooks/queries/useAppointmentsQuery";
 import { usePets } from "@/hooks/queries/usePetsQuery";
 import { useClients } from "@/hooks/queries/useClientsQuery";
@@ -18,6 +19,7 @@ import { useDialog } from "@/contexts/DialogContext";
 export default function AppointmentsPage() {
   const { data: appointments, isLoading: loadingAppointments } =
     useAppointments();
+  const deleteAppointmentMutation = useDeleteAppointment();
 
   const { data: pets, isLoading: loadingPets } = usePets();
   const { data: clients, isLoading: loadingClients } = useClients();
@@ -30,8 +32,11 @@ export default function AppointmentsPage() {
   };
 
   const handleDelete = (appointment: Appointment) => {
-    // A lógica de delete será tratada pelo GlobalDialogs
-    // usando o callback onConfirm
+    deleteAppointmentMutation.mutate(appointment.id, {
+      onSuccess: () => {
+        closeDialog();
+      },
+    });
   };
 
   const loading =

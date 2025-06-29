@@ -1,7 +1,11 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { useStock, useStockMovements } from "@/hooks/queries/useStockQuery";
+import {
+  useStock,
+  useStockMovements,
+  useDeleteProduct,
+} from "@/hooks/queries/useStockQuery";
 import { Product } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Plus, Package, ArrowUpDown } from "lucide-react";
@@ -19,6 +23,7 @@ export default function StockPage() {
   const { data: movements, isLoading: movementsLoading } = useStockMovements();
   const { openProductForm, openDeleteConfirmation, openStockMovementForm } =
     useDialogActions();
+  const deleteProductMutation = useDeleteProduct();
 
   // Estados para filtros
   const [searchTerm, setSearchTerm] = useState("");
@@ -39,6 +44,9 @@ export default function StockPage() {
       id: product.id,
       name: product.name,
       type: "produto",
+      onConfirm: () => {
+        deleteProductMutation.mutate(product.id);
+      },
     });
   };
 

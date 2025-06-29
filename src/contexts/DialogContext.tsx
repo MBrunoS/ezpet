@@ -158,63 +158,6 @@ export function useDialog() {
   return context;
 }
 
-// Helpers tipados para abrir dialogs específicos
-export const dialogActions = {
-  openProductForm: (
-    product?: Product
-  ): { type: "product-form"; data: ProductFormPayload } => ({
-    type: "product-form",
-    data: { product },
-  }),
-
-  openClientForm: (
-    client?: Client
-  ): { type: "client-form"; data: ClientFormPayload } => ({
-    type: "client-form",
-    data: { client },
-  }),
-
-  openServiceForm: (
-    service?: Service
-  ): { type: "service-form"; data: ServiceFormPayload } => ({
-    type: "service-form",
-    data: { service },
-  }),
-
-  openPetForm: (pet?: Pet): { type: "pet-form"; data: PetFormPayload } => ({
-    type: "pet-form",
-    data: { pet },
-  }),
-
-  openDeleteConfirmation: (
-    payload: DeleteConfirmationPayload
-  ): { type: "delete-confirmation"; data: DeleteConfirmationPayload } => ({
-    type: "delete-confirmation",
-    data: payload,
-  }),
-
-  openStockMovementForm: (
-    product?: Product
-  ): { type: "stock-movement-form"; data: StockMovementFormPayload } => ({
-    type: "stock-movement-form",
-    data: { product },
-  }),
-
-  openAppointmentDetails: (
-    appointment: any
-  ): { type: "appointment-details"; data: AppointmentDetailsPayload } => ({
-    type: "appointment-details",
-    data: { appointment },
-  }),
-
-  openAppointmentForm: (
-    appointment?: any
-  ): { type: "appointment-form"; data: AppointmentFormPayload } => ({
-    type: "appointment-form",
-    data: { appointment },
-  }),
-};
-
 // Hook personalizado com helpers tipados
 export function useDialogActions() {
   const { openDialog } = useDialog();
