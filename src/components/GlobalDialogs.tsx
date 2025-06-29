@@ -208,8 +208,8 @@ export function GlobalDialogs() {
   };
 
   const handleAppointmentSubmit = async (data: AppointmentFormData) => {
-    if (!isAppointmentDetailsPayload(state.data)) {
-      console.error("Invalid appointment details payload");
+    if (!isAppointmentFormPayload(state.data)) {
+      console.error("Invalid appointment form payload");
       return;
     }
 

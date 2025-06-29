@@ -18,6 +18,14 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { NavUser } from "./ui/nav-user";
+import {
+  CalendarIcon,
+  House,
+  LayoutList,
+  Package,
+  UserRoundPen,
+  Users,
+} from "lucide-react";
 
 interface MenuItem {
   text: string;
@@ -41,92 +49,32 @@ export function AppSidebar() {
   const items: MenuItem[] = [
     {
       text: "Painel",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24px"
-          height="24px"
-          fill="currentColor"
-          viewBox="0 0 256 256"
-        >
-          <path d="M224,115.55V208a16,16,0,0,1-16,16H168a16,16,0,0,1-16-16V168a8,8,0,0,0-8-8H112a8,8,0,0,0-8,8v40a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V115.55a16,16,0,0,1,5.17-11.78l80-75.48.11-.11a16,16,0,0,1,21.53,0,1.14,1.14,0,0,0,.11.11l80,75.48A16,16,0,0,1,224,115.55Z"></path>
-        </svg>
-      ),
+      icon: <House className="w-5 h-5" />,
       path: "/",
     },
     {
       text: "Estoque",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24px"
-          height="24px"
-          fill="currentColor"
-          viewBox="0 0 256 256"
-        >
-          <path d="M223.68,66.15,135.68,18a15.88,15.88,0,0,0-15.36,0l-88,48.17a16,16,0,0,0-8.32,14v95.64a16,16,0,0,0,8.32,14l88,48.17a15.88,15.88,0,0,0,15.36,0l88-48.17a16,16,0,0,0,8.32-14V80.18A16,16,0,0,0,223.68,66.15ZM128,32l80.34,44-29.77,16.3-80.35-44ZM128,120,47.66,76l33.9-18.56,80.34,44ZM40,90l80,43.78v85.79L40,175.82Zm176,85.78h0l-80,43.79V133.82l32-17.51V152a8,8,0,0,0,16,0V107.55L216,90v85.77Z"></path>
-        </svg>
-      ),
+      icon: <Package className="w-5 h-5" />,
       path: "/stock",
     },
     {
       text: "Agendamentos",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24px"
-          height="24px"
-          fill="currentColor"
-          viewBox="0 0 256 256"
-        >
-          <path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Zm-96-88v64a8,8,0,0,1-16,0V132.94l-4.42,2.22a8,8,0,0,1-7.16-14.32l16-8A8,8,0,0,1,112,120Zm59.16,30.45L152,176h16a8,8,0,0,1,0,16H136a8,8,0,0,1-6.4-12.8l28.78-38.37A8,8,0,1,0,145.07,132a8,8,0,1,1-13.85-8A24,24,0,0,1,176,136,23.76,23.76,0,0,1,171.16,150.45Z"></path>
-        </svg>
-      ),
+      icon: <CalendarIcon className="w-5 h-5" />,
       path: "/appointments",
     },
     {
       text: "Clientes",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24px"
-          height="24px"
-          fill="currentColor"
-          viewBox="0 0 256 256"
-        >
-          <path d="M117.25,157.92a60,60,0,1,0-66.5,0A95.83,95.83,0,0,0,3.53,195.63a8,8,0,1,0,13.4,8.74,80,80,0,0,1,134.14,0,8,8,0,0,0,13.4-8.74A95.83,95.83,0,0,0,117.25,157.92ZM40,108a44,44,0,1,1,44,44A44.05,44.05,0,0,1,40,108Zm210.14,98.7a8,8,0,0,1-11.07-2.33A79.83,79.83,0,0,0,172,168a8,8,0,0,1,0-16,44,44,0,1,0-16.34-84.87,8,8,0,0,1-5.94-14.85,60,60,0,0,1,55.53,105.64,95.83,95.83,0,0,1,47.22,37.71A8,8,0,0,1,250.14,206.7Z"></path>
-        </svg>
-      ),
+      icon: <Users className="w-5 h-5" />,
       path: "/clients",
     },
     {
       text: "Serviços",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24px"
-          height="24px"
-          fill="currentColor"
-          viewBox="0 0 256 256"
-        >
-          <path d="M224,71.1V184.9a15.9,15.9,0,0,1-7.8,13.8l-88,48.2a16.1,16.1,0,0,1-16.4,0l-88-48.2a15.9,15.9,0,0,1-7.8-13.8V71.1a15.9,15.9,0,0,1,7.8-13.8l88-48.2a16.1,16.1,0,0,1,16.4,0l88,48.2A15.9,15.9,0,0,1,224,71.1ZM128,120,40,72l88-48.2L216,72Zm0,16v88.9l80-43.8V92.2Zm-16,88.9V136L32,92.2v80.9Z"></path>
-        </svg>
-      ),
+      icon: <LayoutList className="w-5 h-5" />,
       path: "/services",
     },
     {
       text: "Perfil",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24px"
-          height="24px"
-          fill="currentColor"
-          viewBox="0 0 256 256"
-        >
-          <path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"></path>
-        </svg>
-      ),
+      icon: <UserRoundPen className="w-5 h-5" />,
       path: "/profile",
     },
   ];

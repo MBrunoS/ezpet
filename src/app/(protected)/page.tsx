@@ -6,12 +6,22 @@ import { useAppointments } from "@/hooks/queries/useAppointmentsQuery";
 import { useLowStockProducts } from "@/hooks/queries/useStockQuery";
 import { usePets } from "@/hooks/queries/usePetsQuery";
 import { useServices } from "@/hooks/queries/useServicesQuery";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { AppointmentDetailsDialog } from "@/components/ui/appointment-details-dialog";
-import { Plus, Users, Calendar as CalendarIcon } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Plus,
+  Users,
+  Calendar as CalendarIcon,
+  Package,
+  ArrowUpDown,
+  LayoutList,
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDialog } from "@/contexts/DialogContext";
 
@@ -50,12 +60,24 @@ export default function Home() {
     openDialog("appointment-details", { appointment });
   };
 
-  const handleNewClient = () => {
-    openDialog("client-form", { client: undefined });
-  };
-
-  const handleNewAppointment = () => {
-    openDialog("appointment-form", { appointment: undefined });
+  const handleNewItem = (type: string) => {
+    switch (type) {
+      case "client":
+        openDialog("client-form", { client: undefined });
+        break;
+      case "appointment":
+        openDialog("appointment-form", { appointment: undefined });
+        break;
+      case "product":
+        openDialog("product-form", { product: undefined });
+        break;
+      case "movement":
+        openDialog("stock-movement-form", { product: undefined });
+        break;
+      case "service":
+        openDialog("service-form", { service: undefined });
+        break;
+    }
   };
 
   if (isLoading) {
@@ -73,20 +95,36 @@ export default function Home() {
           Bem-vindo{user?.displayName ? `, ${user?.displayName}` : ""}!
         </p>
         <div className="flex flex-wrap gap-3">
-          <Button
-            onClick={handleNewClient}
-            className="flex gap-2 items-center px-6 py-3"
-          >
-            <Users className="w-4 h-4" />
-            <span>Cadastrar Cliente</span>
-          </Button>
-          <Button
-            onClick={handleNewAppointment}
-            className="flex gap-2 items-center px-6 py-3"
-          >
-            <CalendarIcon className="w-4 h-4" />
-            <span>Novo Agendamento</span>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="flex gap-2 items-center px-6 py-3 text-lg font-bold">
+                <Plus className="!w-6 !h-6" />
+                <span>Novo</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={() => handleNewItem("movement")}>
+                <ArrowUpDown className="mr-2 w-4 h-4" />
+                <span>Nova Movimentação</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleNewItem("product")}>
+                <Package className="mr-2 w-4 h-4" />
+                <span>Novo Produto</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleNewItem("appointment")}>
+                <CalendarIcon className="mr-2 w-4 h-4" />
+                <span>Novo Agendamento</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleNewItem("client")}>
+                <Users className="mr-2 w-4 h-4" />
+                <span>Novo Cliente</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleNewItem("service")}>
+                <LayoutList className="mr-2 w-4 h-4" />
+                <span>Novo Serviço</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
