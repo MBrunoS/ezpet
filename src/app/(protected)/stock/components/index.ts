@@ -3,4 +3,5 @@ export { ProductTable } from "./ProductTable";
 export { ProductTableRow } from "./ProductTableRow";
 export { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
 export { StockMovementForm } from "./StockMovementForm";
-export { StockMovementsTable } from "./StockMovementsTable"; 
+export { StockMovementsTable } from "./StockMovementsTable";
+export { ProductFilters } from "./ProductFilters"; 

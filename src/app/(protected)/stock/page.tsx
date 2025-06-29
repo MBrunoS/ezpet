@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   useStock,
   useAddProduct,
@@ -19,8 +19,10 @@ import {
   DeleteConfirmationDialog,
   StockMovementForm,
   StockMovementsTable,
+  ProductFilters,
 } from "./components";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { filterProducts } from "./utils/filterProducts";
 
 export default function StockPage() {
   const { data: products, isLoading } = useStock();
@@ -37,6 +39,16 @@ export default function StockPage() {
   const [preselectedProduct, setPreselectedProduct] = useState<Product | null>(
     null
   );
+
+  // Estados para filtros
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  // Filtrar produtos
+  const filteredProducts = useMemo(() => {
+    if (!products) return [];
+    return filterProducts(products, searchTerm, statusFilter);
+  }, [products, searchTerm, statusFilter]);
 
   const handleSubmit = async (data: ProductFormData) => {
     if (productInEdit) {
@@ -197,7 +209,7 @@ export default function StockPage() {
             <div>
               <h2 className="flex gap-2 items-center text-xl font-semibold">
                 <Package className="w-5 h-5 text-blue-600" />
-                Produtos ({products?.length || 0})
+                Produtos ({filteredProducts.length} de {products?.length || 0})
               </h2>
               <p className="text-gray-600">
                 Gerencie os produtos do seu estoque
@@ -210,9 +222,16 @@ export default function StockPage() {
           </div>
 
           <div className="bg-white rounded-lg shadow">
-            <div className="p-6">
+            <div className="p-6 space-y-4">
+              <ProductFilters
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                statusFilter={statusFilter}
+                onStatusFilterChange={setStatusFilter}
+              />
+
               <ProductTable
-                products={products || []}
+                products={filteredProducts}
                 onEdit={handleEdit}
                 onDelete={setProductToDelete}
                 onMovement={openMovementFormForProduct}
