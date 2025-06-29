@@ -21,6 +21,20 @@ export interface Product {
   updatedAt?: Date;
 }
 
+export interface StockMovement {
+  id: string;
+  userId: string;
+  productId: string;
+  productName: string;
+  type: 'entrada' | 'saida';
+  quantity: number;
+  previousQuantity: number;
+  newQuantity: number;
+  reason: string;
+  observation?: string;
+  createdAt: Date;
+}
+
 export interface ServiceExtra {
   id: string;
   name: string;

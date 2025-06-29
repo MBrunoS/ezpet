@@ -17,12 +17,14 @@ interface ProductTableProps {
   products: Product[];
   onEdit: (product: Product) => void;
   onDelete: (product: Product) => void;
+  onMovement: (product: Product) => void;
 }
 
 export function ProductTable({
   products,
   onEdit,
   onDelete,
+  onMovement,
 }: ProductTableProps) {
   if (products.length === 0) {
     return (
@@ -57,6 +59,7 @@ export function ProductTable({
               product={product}
               onEdit={onEdit}
               onDelete={onDelete}
+              onMovement={onMovement}
             />
           ))}
         </TableBody>

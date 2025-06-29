@@ -3,7 +3,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, ArrowUpDown } from "lucide-react";
 import { Product } from "@/types";
 import { formatCurrency } from "@/lib/utils";
 
@@ -11,12 +11,14 @@ interface ProductTableRowProps {
   product: Product;
   onEdit: (product: Product) => void;
   onDelete: (product: Product) => void;
+  onMovement: (product: Product) => void;
 }
 
 export function ProductTableRow({
   product,
   onEdit,
   onDelete,
+  onMovement,
 }: ProductTableRowProps) {
   const getStatusColor = (quantity: number, minStock: number) => {
     if (quantity <= minStock) {
@@ -79,6 +81,15 @@ export function ProductTableRow({
       </TableCell>
       <TableCell className="text-right">
         <div className="flex gap-2 justify-end items-center">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onMovement(product)}
+            className="text-blue-600 hover:text-blue-700"
+            title="Registrar movimentação"
+          >
+            <ArrowUpDown className="w-4 h-4" />
+          </Button>
           <Button variant="outline" size="sm" onClick={() => onEdit(product)}>
             <Edit className="w-4 h-4" />
           </Button>

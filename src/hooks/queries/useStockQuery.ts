@@ -8,10 +8,12 @@ import {
   getDocs, 
   query,
   where,
-  serverTimestamp 
+  serverTimestamp,
+  increment,
+  orderBy
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Product } from '@/types';
+import { Product, StockMovement } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
@@ -23,6 +25,9 @@ export const stockKeys = {
   details: () => [...stockKeys.all, 'detail'] as const,
   detail: (id: string) => [...stockKeys.details(), id] as const,
   lowStock: (userId: string) => [...stockKeys.all, 'lowStock', userId] as const,
+  movements: () => [...stockKeys.all, 'movements'] as const,
+  movementsList: (userId: string) => [...stockKeys.movements(), userId] as const,
+  productMovements: (productId: string) => [...stockKeys.movements(), 'product', productId] as const,
 };
 
 // Fetch function
@@ -34,6 +39,38 @@ const fetchProducts = async (userId: string): Promise<Product[]> => {
     id: doc.id,
     ...doc.data()
   })) as Product[];
+};
+
+// Fetch function for stock movements
+const fetchStockMovements = async (userId: string): Promise<StockMovement[]> => {
+  const movementsRef = collection(db, 'stockMovements');
+  const q = query(
+    movementsRef, 
+    where('userId', '==', userId),
+    orderBy('createdAt', 'desc')
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+    createdAt: doc.data().createdAt?.toDate() || new Date()
+  })) as StockMovement[];
+};
+
+// Fetch function for product movements
+const fetchProductMovements = async (productId: string): Promise<StockMovement[]> => {
+  const movementsRef = collection(db, 'stockMovements');
+  const q = query(
+    movementsRef, 
+    where('productId', '==', productId),
+    orderBy('createdAt', 'desc')
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+    createdAt: doc.data().createdAt?.toDate() || new Date()
+  })) as StockMovement[];
 };
 
 // Query hook
@@ -58,6 +95,28 @@ export function useLowStockProducts() {
       return products.filter(product => product.quantity <= product.minStock);
     },
     enabled: !!user,
+  });
+}
+
+// Query hook for stock movements
+export function useStockMovements() {
+  const { user } = useAuth();
+  
+  return useQuery({
+    queryKey: stockKeys.movementsList(user?.uid || ''),
+    queryFn: () => fetchStockMovements(user!.uid),
+    enabled: !!user,
+  });
+}
+
+// Query hook for product movements
+export function useProductMovements(productId: string) {
+  const { user } = useAuth();
+  
+  return useQuery({
+    queryKey: stockKeys.productMovements(productId),
+    queryFn: () => fetchProductMovements(productId),
+    enabled: !!user && !!productId,
   });
 }
 
@@ -125,6 +184,83 @@ export function useDeleteProduct() {
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : 'Erro ao excluir produto');
+    },
+  });
+}
+
+// Mutation for stock movement
+export function useStockMovement() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  
+  return useMutation({
+    mutationFn: async ({ 
+      productId, 
+      productName, 
+      type, 
+      quantity, 
+      reason, 
+      observation 
+    }: {
+      productId: string;
+      productName: string;
+      type: 'entrada' | 'saida';
+      quantity: number;
+      reason: string;
+      observation?: string;
+    }) => {
+      // Get current product to check quantity
+      const productRef = doc(db, 'products', productId);
+      const productDoc = await getDocs(query(collection(db, 'products'), where('__name__', '==', productId)));
+      
+      if (productDoc.empty) {
+        throw new Error('Produto não encontrado');
+      }
+      
+      const currentProduct = productDoc.docs[0].data() as Product;
+      const previousQuantity = currentProduct.quantity;
+      
+      // Calculate new quantity
+      let newQuantity: number;
+      if (type === 'entrada') {
+        newQuantity = previousQuantity + quantity;
+      } else {
+        if (previousQuantity < quantity) {
+          throw new Error('Quantidade insuficiente em estoque');
+        }
+        newQuantity = previousQuantity - quantity;
+      }
+      
+      // Update product quantity
+      await updateDoc(productRef, {
+        quantity: newQuantity,
+        updatedAt: serverTimestamp()
+      });
+      
+      // Create movement record
+      const movement = {
+        userId: user!.uid,
+        productId,
+        productName,
+        type,
+        quantity,
+        previousQuantity,
+        newQuantity,
+        reason,
+        observation,
+        createdAt: serverTimestamp()
+      };
+      
+      return addDoc(collection(db, 'stockMovements'), movement);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: stockKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: stockKeys.lowStock(user!.uid) });
+      queryClient.invalidateQueries({ queryKey: stockKeys.movements() });
+      toast.success('Movimentação registrada com sucesso!');
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Erro ao registrar movimentação');
     },
   });
 } 

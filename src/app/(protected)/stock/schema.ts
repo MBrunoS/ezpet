@@ -11,4 +11,15 @@ export const productSchema = z.object({
     .min(0, "Estoque mínimo deve ser maior ou igual a zero"),
 });
 
+export const stockMovementSchema = z.object({
+  productId: z.string().min(1, "Produto é obrigatório"),
+  type: z.enum(["entrada", "saida"], {
+    required_error: "Tipo de movimentação é obrigatório",
+  }),
+  quantity: z.number().min(1, "Quantidade deve ser maior que zero"),
+  reason: z.string().min(1, "Motivo é obrigatório"),
+  observation: z.string().optional(),
+});
+
 export type ProductFormData = z.infer<typeof productSchema>;
+export type StockMovementFormData = z.infer<typeof stockMovementSchema>;
