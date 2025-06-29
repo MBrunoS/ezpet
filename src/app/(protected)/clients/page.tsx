@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useMemo } from "react";
 import {
   useClients,
   useAddClient,
@@ -13,12 +13,14 @@ import { useAddPet, useDeletePet } from "@/hooks/queries/usePetsQuery";
 import { Client, Pet } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Plus, Users } from "lucide-react";
-import { ClientForm, ClientTable } from "./components";
+import { ClientForm, ClientTable, ClientFilters } from "./components";
 import { ClientFormData } from "./schema";
 import { useDialog } from "@/contexts/DialogContext";
 
 export default function ClientsPage() {
   const { data: clients, isLoading: loadingClients } = useClients();
+  const [searchTerm, setSearchTerm] = useState("");
+
   const addClientMutation = useAddClient();
   const updateClientMutation = useUpdateClient();
   const deleteClientMutation = useDeleteClient();
@@ -29,6 +31,16 @@ export default function ClientsPage() {
   const deletePetMutation = useDeletePet();
 
   const { openDialog, closeDialog } = useDialog();
+
+  // Filtrar clientes baseado no termo de pesquisa
+  const filteredClients = useMemo(() => {
+    if (!clients) return [];
+    if (!searchTerm.trim()) return clients;
+
+    return clients.filter((client) =>
+      client.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [clients, searchTerm]);
 
   const handleSubmit = async (data: ClientFormData, tempPets: Pet[] = []) => {
     // O clientInEdit será passado via contexto do GlobalDialogs
@@ -102,12 +114,19 @@ export default function ClientsPage() {
           <div className="flex gap-2 items-center mb-4">
             <Users className="w-5 h-5 text-blue-600" />
             <h2 className="text-xl font-semibold">
-              Clientes ({clients?.length || 0})
+              Clientes ({filteredClients.length || 0})
             </h2>
           </div>
 
+          <div className="mb-4">
+            <ClientFilters
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+            />
+          </div>
+
           <ClientTable
-            clients={clients || []}
+            clients={filteredClients}
             onEdit={handleEdit}
             onDelete={(client) =>
               openDialog("delete-confirmation", {

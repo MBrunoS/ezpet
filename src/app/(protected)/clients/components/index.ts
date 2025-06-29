@@ -5,3 +5,4 @@ export { PetDialog } from "./PetDialog";
 export { ClientDataSection } from "./ClientDataSection";
 export { ClientAddressSection } from "./ClientAddressSection";
 export { PetsSection } from "./PetsSection";
+export { ClientFilters } from "./ClientFilters";

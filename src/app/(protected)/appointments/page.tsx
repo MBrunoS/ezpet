@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useMemo } from "react";
 import {
   useAppointments,
   useAddAppointment,
@@ -12,7 +12,7 @@ import { useServices } from "@/hooks/queries/useServicesQuery";
 import { Appointment } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Plus, Calendar } from "lucide-react";
-import { AppointmentTable } from "./components/AppointmentTable";
+import { AppointmentTable, AppointmentFilters } from "./components";
 import { toast } from "sonner";
 import { useDialog } from "@/contexts/DialogContext";
 
@@ -25,7 +25,91 @@ export default function AppointmentsPage() {
   const { data: clients, isLoading: loadingClients } = useClients();
   const { data: services, isLoading: loadingServices } = useServices();
 
+  // Estados para filtros
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("");
+  const [timeFilter, setTimeFilter] = useState("all");
+
   const { openDialog, closeDialog } = useDialog();
+
+  // Filtrar agendamentos baseado nos filtros aplicados
+  const filteredAppointments = useMemo(() => {
+    if (!appointments) return [];
+
+    let filtered = appointments;
+
+    // Filtro por termo de pesquisa (cliente ou pet)
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter((appointment) => {
+        const client = clients?.find((c) => c.id === appointment.clientId);
+        const pet = pets?.find((p) => p.id === appointment.petId);
+
+        return (
+          client?.name.toLowerCase().includes(searchLower) ||
+          pet?.name.toLowerCase().includes(searchLower)
+        );
+      });
+    }
+
+    // Filtro por status
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(
+        (appointment) => appointment.status === statusFilter
+      );
+    }
+
+    // Filtro por data
+    if (dateFilter) {
+      // Criar a data considerando timezone local para evitar problemas de UTC
+      const [year, month, day] = dateFilter.split("-").map(Number);
+      const filterDate = new Date(year, month - 1, day); // month - 1 porque getMonth() retorna 0-11
+
+      filtered = filtered.filter((appointment) => {
+        const appointmentDate = new Date(appointment.date);
+
+        // Comparar apenas ano, mês e dia, ignorando horário e timezone
+        const appointmentYear = appointmentDate.getFullYear();
+        const appointmentMonth = appointmentDate.getMonth();
+        const appointmentDay = appointmentDate.getDate();
+
+        return (
+          appointmentYear === filterDate.getFullYear() &&
+          appointmentMonth === filterDate.getMonth() &&
+          appointmentDay === filterDate.getDate()
+        );
+      });
+    }
+
+    // Filtro por horário
+    if (timeFilter !== "all") {
+      filtered = filtered.filter((appointment) => {
+        const appointmentHour = new Date(appointment.date).getHours();
+
+        switch (timeFilter) {
+          case "morning":
+            return appointmentHour >= 6 && appointmentHour < 12;
+          case "afternoon":
+            return appointmentHour >= 12 && appointmentHour < 18;
+          case "evening":
+            return appointmentHour >= 18 && appointmentHour <= 23;
+          default:
+            return true;
+        }
+      });
+    }
+
+    return filtered;
+  }, [
+    appointments,
+    clients,
+    pets,
+    searchTerm,
+    statusFilter,
+    dateFilter,
+    timeFilter,
+  ]);
 
   const handleEdit = (appointment: Appointment) => {
     openDialog("appointment-form", { appointment });
@@ -37,6 +121,13 @@ export default function AppointmentsPage() {
         closeDialog();
       },
     });
+  };
+
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("all");
+    setDateFilter("");
+    setTimeFilter("all");
   };
 
   const loading =
@@ -73,12 +164,26 @@ export default function AppointmentsPage() {
           <div className="flex gap-2 items-center mb-4">
             <Calendar className="w-5 h-5 text-blue-600" />
             <h2 className="text-xl font-semibold">
-              Agendamentos ({appointments?.length || 0})
+              Agendamentos ({filteredAppointments.length || 0})
             </h2>
           </div>
 
+          <div className="mb-6">
+            <AppointmentFilters
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              statusFilter={statusFilter}
+              onStatusFilterChange={setStatusFilter}
+              dateFilter={dateFilter}
+              onDateFilterChange={setDateFilter}
+              timeFilter={timeFilter}
+              onTimeFilterChange={setTimeFilter}
+              onClearFilters={handleClearFilters}
+            />
+          </div>
+
           <AppointmentTable
-            appointments={appointments || []}
+            appointments={filteredAppointments}
             onEdit={handleEdit}
             onDelete={(appointment) =>
               openDialog("delete-confirmation", {

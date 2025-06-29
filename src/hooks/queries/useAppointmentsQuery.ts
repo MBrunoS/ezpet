@@ -65,10 +65,9 @@ export function useAppointmentsByDate(date: Date) {
   return useQuery({
     queryKey: appointmentKeys.byDate(date),
     queryFn: async () => {
-      const startOfDay = new Date(date);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(date);
-      endOfDay.setHours(23, 59, 59, 999);
+      // Criar datas de início e fim do dia considerando timezone local
+      const startOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+      const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
 
       const appointmentsRef = collection(db, 'appointments');
       const q = query(
@@ -186,10 +185,9 @@ async function checkTimeSlotAvailability(
     const service = serviceSnapshot.docs[0]?.data() as Service;
     const serviceDuration = service?.duration || DEFAULT_SERVICE_DURATION;
 
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
+    // Criar datas de início e fim do dia considerando timezone local
+    const startOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+    const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
 
     const appointmentsRef = collection(db, 'appointments');
     const q = query(
