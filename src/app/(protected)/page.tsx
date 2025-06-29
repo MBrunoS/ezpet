@@ -21,12 +21,16 @@ import {
   Package,
   ArrowUpDown,
   LayoutList,
+  Link,
+  Check,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDialog } from "@/contexts/DialogContext";
+import { toast } from "sonner";
 
 export default function Home() {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [copied, setCopied] = useState(false);
 
   const { user } = useAuth();
   const { data: clients, isLoading: clientsLoading } = useClients();
@@ -80,6 +84,26 @@ export default function Home() {
     }
   };
 
+  const handleCopyBookingLink = async () => {
+    if (!user?.uid) {
+      toast.error("Usuário não identificado");
+      return;
+    }
+
+    const bookingUrl = `${window.location.origin}/booking/${user.uid}`;
+
+    try {
+      await navigator.clipboard.writeText(bookingUrl);
+      setCopied(true);
+      toast.success("Link de agendamento copiado!");
+
+      // Reset do estado após 2 segundos
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      toast.error("Erro ao copiar link");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -95,6 +119,23 @@ export default function Home() {
           Bem-vindo{user?.displayName ? `, ${user?.displayName}` : ""}!
         </p>
         <div className="flex flex-wrap gap-3">
+          <Button
+            onClick={handleCopyBookingLink}
+            variant="outline"
+            className="flex gap-2 items-center px-6 py-3 text-lg font-bold"
+          >
+            {copied ? (
+              <>
+                <Check className="!w-6 !h-6 text-green-600" />
+                <span>Copiado!</span>
+              </>
+            ) : (
+              <>
+                <Link className="!w-6 !h-6" />
+                <span>Link de Agendamento</span>
+              </>
+            )}
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button className="flex gap-2 items-center px-6 py-3 text-lg font-bold">

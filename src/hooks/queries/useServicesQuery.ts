@@ -54,6 +54,15 @@ export function useServices() {
   });
 }
 
+// Query hook for services (public booking version)
+export function useServicesPublic(userId: string) {
+  return useQuery({
+    queryKey: [...serviceKeys.list(userId), 'public'],
+    queryFn: () => fetchServices(userId),
+    enabled: !!userId,
+  });
+}
+
 // Mutations
 export function useAddService() {
   const queryClient = useQueryClient();

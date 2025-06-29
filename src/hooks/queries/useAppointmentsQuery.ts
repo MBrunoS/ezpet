@@ -58,6 +58,15 @@ export function useAppointments() {
   });
 }
 
+// Query hook for appointments (public booking version)
+export function useAppointmentsPublic(userId: string) {
+  return useQuery({
+    queryKey: appointmentKeys.list(userId),
+    queryFn: () => fetchAppointments(userId),
+    enabled: !!userId,
+  });
+}
+
 // Query hook for appointments by date
 export function useAppointmentsByDate(date: Date) {
   const { user } = useAuth();
@@ -107,6 +116,37 @@ export function useAddAppointment() {
       const newAppointment = {
         ...appointment,
         userId: user!.uid,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        status: 'scheduled'
+      };
+      return addDoc(collection(db, 'appointments'), newAppointment);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: appointmentKeys.lists() });
+      toast.success('Agendamento cadastrado com sucesso!');
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Erro ao criar agendamento');
+    },
+  });
+}
+
+// Mutation for adding appointment (public booking version)
+export function useAddAppointmentPublic(userId: string) {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (appointment: Omit<Appointment, 'id' | 'userId'>) => {
+      // Verificar disponibilidade antes de criar
+      const isAvailable = await checkTimeSlotAvailability(appointment.date, appointment.serviceId, userId);
+      if (!isAvailable) {
+        throw new Error('Este horário já está ocupado');
+      }
+
+      const newAppointment = {
+        ...appointment,
+        userId: userId,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         status: 'scheduled'

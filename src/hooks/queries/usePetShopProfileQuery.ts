@@ -49,6 +49,15 @@ export function usePetShopProfile() {
   });
 }
 
+// Query hook for public booking (accepts userId as parameter)
+export function usePetShopProfileByUserId(userId: string) {
+  return useQuery({
+    queryKey: profileKeys.detail(userId),
+    queryFn: () => fetchProfile(userId),
+    enabled: !!userId,
+  });
+}
+
 // Mutations
 export function useCreateProfile() {
   const queryClient = useQueryClient();

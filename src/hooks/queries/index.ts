@@ -14,4 +14,4 @@ export * from './useAppointmentsQuery';
 export * from './useStockQuery';
 
 // PetShop Profile
-export * from './usePetShopProfileQuery'; 
+export * from './usePetShopProfileQuery';

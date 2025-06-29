@@ -70,6 +70,27 @@ export function usePetsByClient(clientId: string) {
   });
 }
 
+// Query hook for pets by client (public booking version)
+export function usePetsByClientPublic(userId: string, clientId: string) {
+  return useQuery({
+    queryKey: [...petKeys.byClient(clientId), 'public', userId],
+    queryFn: async () => {
+      const petsRef = collection(db, 'pets');
+      const q = query(
+        petsRef, 
+        where('userId', '==', userId),
+        where('clientId', '==', clientId)
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Pet[];
+    },
+    enabled: !!userId && !!clientId,
+  });
+}
+
 // Mutations
 export function useAddPet() {
   const queryClient = useQueryClient();
@@ -80,6 +101,31 @@ export function useAddPet() {
       const newPet = {
         ...pet,
         userId: user!.uid,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+      return addDoc(collection(db, 'pets'), newPet);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: petKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: petKeys.byClient(variables.clientId) });
+      toast.success('Pet cadastrado com sucesso!');
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Erro ao criar pet');
+    },
+  });
+}
+
+// Mutation for adding pet (public booking version)
+export function useAddPetPublic(userId: string) {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (pet: Omit<Pet, 'id' | 'userId'>) => {
+      const newPet = {
+        ...pet,
+        userId: userId,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       };
