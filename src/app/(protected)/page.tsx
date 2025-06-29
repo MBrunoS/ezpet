@@ -14,6 +14,7 @@ import { AppointmentDetailsDialog } from "@/components/ui/appointment-details-di
 import { AppointmentForm } from "@/app/(protected)/appointments/components/AppointmentForm";
 import { DeleteConfirmationDialog } from "@/app/(protected)/appointments/components/DeleteConfirmationDialog";
 import { useAppointmentActions } from "@/hooks/useAppointmentActions";
+import { Plus, Users, Calendar as CalendarIcon } from "lucide-react";
 
 export default function Home() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -79,82 +80,100 @@ export default function Home() {
         </p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="flex flex-wrap gap-4 p-4">
-        <div className="flex min-w-[158px] flex-1 flex-col gap-2 rounded-lg p-6 border border-border">
-          <p className="text-base font-medium leading-normal text-text">
-            Total de Clientes
-          </p>
-          <p className="text-2xl font-bold leading-tight text-text tracking-light">
-            {clients?.length || 0}
-          </p>
-        </div>
-        <div className="flex min-w-[158px] flex-1 flex-col gap-2 rounded-lg p-6 border border-border">
-          <p className="text-base font-medium leading-normal text-text">
-            Agendamentos Futuros
-          </p>
-          <p className="text-2xl font-bold leading-tight text-text tracking-light">
-            {upcomingAppointments.length}
-          </p>
-        </div>
-        <div className="flex min-w-[158px] flex-1 flex-col gap-2 rounded-lg p-6 border border-border">
-          <p className="text-base font-medium leading-normal text-text">
-            Produtos com Estoque Baixo
-          </p>
-          <p className="text-2xl font-bold leading-tight text-text tracking-light">
-            {lowStockProducts?.length || 0}
-          </p>
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <h2 className="text-text text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">
-        Ações Rápidas
-      </h2>
-      <div className="flex justify-stretch">
-        <div className="flex flex-wrap flex-1 gap-3 justify-start px-4 py-3">
-          <Button>
-            <span className="truncate">Cadastrar Cliente</span>
+      {/* Quick Actions - Moved to top for better visibility */}
+      <div className="px-4 pb-6">
+        <h2 className="text-text text-[22px] font-bold leading-tight tracking-[-0.015em] mb-4">
+          Ações Rápidas
+        </h2>
+        <div className="flex flex-wrap gap-3">
+          <Button className="flex gap-2 items-center px-6 py-3">
+            <Users className="w-4 h-4" />
+            <span>Cadastrar Cliente</span>
           </Button>
-          <Button>
-            <span className="truncate">Novo Agendamento</span>
+          <Button className="flex gap-2 items-center px-6 py-3">
+            <CalendarIcon className="w-4 h-4" />
+            <span>Novo Agendamento</span>
+          </Button>
+          <Button
+            variant="outline"
+            className="flex gap-2 items-center px-6 py-3"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Novo Pet</span>
           </Button>
         </div>
       </div>
 
-      {/* Calendar View */}
-      <h2 className="text-text text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">
-        Calendário de Agendamentos
-      </h2>
-      <div className="px-4 py-3">
-        <Calendar
-          appointments={appointments || []}
-          currentDate={currentDate}
-          onDateChange={setCurrentDate}
-          onAppointmentClick={handleAppointmentClick}
-        />
-      </div>
+      {/* Two Column Layout */}
+      <div className="flex flex-col gap-6 px-4 pb-6 lg:flex-row">
+        {/* Left Column - Info Cards */}
+        <div className="flex flex-col gap-6 lg:w-1/3">
+          <div>
+            <h2 className="text-text text-[22px] font-bold leading-tight tracking-[-0.015em] mb-4">
+              Informações Gerais
+            </h2>
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2 p-6 bg-white rounded-lg border border-border">
+                <p className="text-base font-medium leading-normal text-text">
+                  Total de Clientes
+                </p>
+                <p className="text-3xl font-bold leading-tight text-text tracking-light">
+                  {clients?.length || 0}
+                </p>
+              </div>
 
-      {/* Finance Overview */}
-      <h2 className="text-text text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">
-        Visão Geral Financeira
-      </h2>
-      <div className="flex flex-wrap gap-4 p-4">
-        <div className="flex min-w-[158px] flex-1 flex-col gap-2 rounded-lg p-6 border border-border">
-          <p className="text-base font-medium leading-normal text-text">
-            Receita Total
-          </p>
-          <p className="text-2xl font-bold leading-tight text-text tracking-light">
-            R$ 15.000
-          </p>
+              <div className="flex flex-col gap-2 p-6 bg-white rounded-lg border border-border">
+                <p className="text-base font-medium leading-normal text-text">
+                  Agendamentos Futuros
+                </p>
+                <p className="text-3xl font-bold leading-tight text-text tracking-light">
+                  {upcomingAppointments.length}
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2 p-6 bg-white rounded-lg border border-border">
+                <p className="text-base font-medium leading-normal text-text">
+                  Produtos com Estoque Baixo
+                </p>
+                <p className="text-3xl font-bold leading-tight text-text tracking-light">
+                  {lowStockProducts?.length || 0}
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2 p-6 bg-white rounded-lg border border-border">
+                <p className="text-base font-medium leading-normal text-text">
+                  Total de Pets
+                </p>
+                <p className="text-3xl font-bold leading-tight text-text tracking-light">
+                  {pets?.length || 0}
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2 p-6 bg-white rounded-lg border border-border">
+                <p className="text-base font-medium leading-normal text-text">
+                  Serviços Disponíveis
+                </p>
+                <p className="text-3xl font-bold leading-tight text-text tracking-light">
+                  {services?.length || 0}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="flex min-w-[158px] flex-1 flex-col gap-2 rounded-lg p-6 border border-border">
-          <p className="text-base font-medium leading-normal text-text">
-            Despesas
-          </p>
-          <p className="text-2xl font-bold leading-tight text-text tracking-light">
-            R$ 3.000
-          </p>
+
+        {/* Right Column - Calendar */}
+        <div className="flex flex-col gap-4 lg:w-2/3">
+          <h2 className="text-text text-[22px] font-bold leading-tight tracking-[-0.015em]">
+            Calendário de Agendamentos
+          </h2>
+          <div className="bg-white rounded-lg border border-border">
+            <Calendar
+              appointments={appointments || []}
+              currentDate={currentDate}
+              onDateChange={setCurrentDate}
+              onAppointmentClick={handleAppointmentClick}
+            />
+          </div>
         </div>
       </div>
 
