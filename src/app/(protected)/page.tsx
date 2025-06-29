@@ -15,10 +15,12 @@ import { AppointmentForm } from "@/app/(protected)/appointments/components/Appoi
 import { DeleteConfirmationDialog } from "@/app/(protected)/appointments/components/DeleteConfirmationDialog";
 import { useAppointmentActions } from "@/hooks/useAppointmentActions";
 import { Plus, Users, Calendar as CalendarIcon } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Home() {
   const [currentDate, setCurrentDate] = useState(new Date());
 
+  const { user } = useAuth();
   const { data: clients, isLoading: clientsLoading } = useClients();
   const { data: appointments, isLoading: appointmentsLoading } =
     useAppointments();
@@ -73,18 +75,10 @@ export default function Home() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Dashboard Header */}
-      <div className="flex flex-wrap gap-3 justify-between p-4">
+      <div className="flex flex-wrap gap-3 justify-between p-4 mb-12">
         <p className="text-text tracking-light text-[32px] font-bold leading-tight min-w-72">
-          Dashboard
+          Bem-vindo{user?.displayName ? `, ${user?.displayName}` : ""}!
         </p>
-      </div>
-
-      {/* Quick Actions - Moved to top for better visibility */}
-      <div className="px-4 pb-6">
-        <h2 className="text-text text-[22px] font-bold leading-tight tracking-[-0.015em] mb-4">
-          Ações Rápidas
-        </h2>
         <div className="flex flex-wrap gap-3">
           <Button className="flex gap-2 items-center px-6 py-3">
             <Users className="w-4 h-4" />
@@ -94,17 +88,9 @@ export default function Home() {
             <CalendarIcon className="w-4 h-4" />
             <span>Novo Agendamento</span>
           </Button>
-          <Button
-            variant="outline"
-            className="flex gap-2 items-center px-6 py-3"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Novo Pet</span>
-          </Button>
         </div>
       </div>
 
-      {/* Two Column Layout */}
       <div className="flex flex-col gap-6 px-4 pb-6 lg:flex-row">
         {/* Left Column - Info Cards */}
         <div className="flex flex-col gap-6 lg:w-1/3">

@@ -2,6 +2,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Sidebar,
   SidebarContent,
@@ -13,7 +14,10 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
+import { NavUser } from "./ui/nav-user";
 
 interface MenuItem {
   text: string;
@@ -23,6 +27,16 @@ interface MenuItem {
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
+  const { open } = useSidebar();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+    }
+  };
 
   const items: MenuItem[] = [
     {
@@ -101,21 +115,6 @@ export function AppSidebar() {
       path: "/stock",
     },
     {
-      text: "Financeiro",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24px"
-          height="24px"
-          fill="currentColor"
-          viewBox="0 0 256 256"
-        >
-          <path d="M152,120H136V56h8a32,32,0,0,1,32,32,8,8,0,0,0,16,0,48.05,48.05,0,0,0-48-48h-8V24a8,8,0,0,0-16,0V40h-8a48,48,0,0,0,0,96h8v64H104a32,32,0,0,1-32-32,8,8,0,0,0-16,0,48.05,48.05,0,0,0,48,48h16v16a8,8,0,0,0,16,0V216h16a48,48,0,0,0,0-96Zm-40,0a32,32,0,0,1,0-64h8v64Zm40,80H136V136h16a32,32,0,0,1,0,64Z"></path>
-        </svg>
-      ),
-      path: "/finance",
-    },
-    {
       text: "Perfil",
       icon: (
         <svg
@@ -134,6 +133,24 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
+      <SidebarHeader className="flex justify-between items-center p-4 border-b border-border">
+        <SidebarMenu>
+          <SidebarMenuItem className="flex justify-between items-center">
+            <SidebarMenuButton
+              size="lg"
+              className="text-sm leading-tight text-left"
+            >
+              {open && (
+                <Link href="/">
+                  <span className="font-medium truncate">EzPet</span>
+                </Link>
+              )}
+            </SidebarMenuButton>
+            <SidebarTrigger />
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Menu</SidebarGroupLabel>
@@ -157,8 +174,20 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>
-        <div className="px-2 text-xs text-muted-foreground">EzPet v1.0.0</div>
+
+      <SidebarFooter className="border-t border-border">
+        {user && (
+          <div className="flex flex-col gap-3">
+            <NavUser
+              user={{
+                name: user.displayName || "",
+                email: user.email || "",
+                avatar: user.photoURL || "",
+              }}
+              onLogout={handleLogout}
+            />
+          </div>
+        )}
       </SidebarFooter>
     </Sidebar>
   );

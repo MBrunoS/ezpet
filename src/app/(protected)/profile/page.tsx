@@ -65,10 +65,6 @@ export default function ProfilePage() {
             Configure as informações do seu pet shop
           </p>
         </div>
-        <div className="flex gap-2 items-center text-blue-600">
-          <Settings className="w-5 h-5" />
-          <span className="font-medium">Perfil</span>
-        </div>
       </div>
 
       <div className="bg-white rounded-lg shadow">
