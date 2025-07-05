@@ -29,6 +29,7 @@ import Link from "next/link";
 export default function LandingPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const year = new Date().getFullYear();
 
   useEffect(() => {
     if (user && !loading) {
@@ -248,7 +249,7 @@ export default function LandingPage() {
       <footer className="py-12 text-white bg-gray-900">
         <div className="container px-4 mx-auto">
           <div className="text-center text-gray-400">
-            <p>&copy; 2024 EzPet. Todos os direitos reservados.</p>
+            <p>&copy; {year} EzPet. Todos os direitos reservados.</p>
           </div>
         </div>
       </footer>
