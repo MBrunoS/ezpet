@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useUpdateAppointment, useDeleteAppointment } from "@/hooks/queries/useAppointmentsQuery";
 import { Appointment, Client, Pet, Service } from "@/types";
-import { AppointmentFormData } from "@/app/(protected)/appointments/schema";
+import { AppointmentFormData } from "@/app/dashboard/appointments/schema";
 import { toast } from "sonner";
 
 interface UseAppointmentActionsProps {

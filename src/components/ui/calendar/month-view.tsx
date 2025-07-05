@@ -83,22 +83,20 @@ export function MonthView({
         return (
           <div
             key={index}
-            className={`min-h-[120px] bg-background p-2 ${
-              !isCurrentMonth ? "text-muted-foreground/50" : ""
-            }`}
+            className={`h-[120px] bg-background p-2 flex flex-col ${
+              !isCurrentMonth ? "text-muted-foreground/50" : ""}`}
           >
             <div
               className={`text-sm font-medium mb-1 ${
                 isCurrentDay
                   ? "flex justify-center items-center w-6 h-6 rounded-full bg-primary text-primary-foreground"
-                  : ""
-              }`}
+                  : ""}`}
             >
               {format(day, "d")}
             </div>
 
             {/* Appointments for this day */}
-            <div className="space-y-1">
+            <div className="overflow-y-auto space-y-1">
               {dayAppointments
                 .slice(0, 3)
                 .map(({ appointment, client, pet }) => (

@@ -19,7 +19,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (user && !loading) {
-      router.push("/");
+      router.replace("/dashboard");
     }
   }, [user, loading, router]);
 
@@ -44,10 +44,10 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-50">
-      <Card className="w-full max-w-md">
+    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-green-50 to-emerald-50">
+      <Card className="w-full max-w-md border-0 shadow-xl">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">EzPet</CardTitle>
+          <CardTitle className="text-2xl font-bold">Entrar no EzPet</CardTitle>
           <CardDescription>Sistema de Gestão para Pet Shops</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

@@ -127,7 +127,7 @@ export function NavUser({ user, onLogout }: NavUserProps) {
           >
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
-                <Link href="/profile">
+                <Link href="/dashboard/profile">
                   <User />
                   Perfil
                 </Link>

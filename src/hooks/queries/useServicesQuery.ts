@@ -14,7 +14,7 @@ import {
 import { db } from '@/lib/firebase';
 import { Service } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
-import { ServiceFormData } from '@/app/(protected)/services/schema';
+import { ServiceFormData } from '@/app/dashboard/services/schema';
 import { toast } from 'sonner';
 
 // Query Keys

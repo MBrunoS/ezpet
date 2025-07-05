@@ -50,32 +50,32 @@ export function AppSidebar() {
     {
       text: "Painel",
       icon: <House className="w-5 h-5" />,
-      path: "/",
+      path: "/dashboard",
     },
     {
       text: "Estoque",
       icon: <Package className="w-5 h-5" />,
-      path: "/stock",
+      path: "/dashboard/stock",
     },
     {
       text: "Agendamentos",
       icon: <CalendarIcon className="w-5 h-5" />,
-      path: "/appointments",
+      path: "/dashboard/appointments",
     },
     {
       text: "Clientes",
       icon: <Users className="w-5 h-5" />,
-      path: "/clients",
+      path: "/dashboard/clients",
     },
     {
       text: "Serviços",
       icon: <LayoutList className="w-5 h-5" />,
-      path: "/services",
+      path: "/dashboard/services",
     },
     {
       text: "Perfil",
       icon: <UserRoundPen className="w-5 h-5" />,
-      path: "/profile",
+      path: "/dashboard/profile",
     },
   ];
 
@@ -89,7 +89,7 @@ export function AppSidebar() {
               className="text-sm leading-tight text-left"
             >
               {open && (
-                <Link href="/">
+                <Link href="/dashboard">
                   <span className="font-medium truncate">EzPet</span>
                 </Link>
               )}

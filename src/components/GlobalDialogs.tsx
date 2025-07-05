@@ -2,12 +2,12 @@
 
 import React from "react";
 import { useDialog } from "@/contexts/DialogContext";
-import { ProductForm } from "@/app/(protected)/stock/components/ProductForm";
-import { StockMovementForm } from "@/app/(protected)/stock/components/StockMovementForm";
+import { ProductForm } from "@/app/dashboard/stock/components/ProductForm";
+import { StockMovementForm } from "@/app/dashboard/stock/components/StockMovementForm";
 import { DeleteConfirmationDialog } from "@/components/DeleteConfirmationDialog";
-import { ClientForm } from "@/app/(protected)/clients/components/ClientForm";
-import { ServiceForm } from "@/app/(protected)/services/components/ServiceForm";
-import { AppointmentForm } from "@/app/(protected)/appointments/components/AppointmentForm";
+import { ClientForm } from "@/app/dashboard/clients/components/ClientForm";
+import { ServiceForm } from "@/app/dashboard/services/components/ServiceForm";
+import { AppointmentForm } from "@/app/dashboard/appointments/components/AppointmentForm";
 import { AppointmentDetailsDialog } from "@/components/ui/appointment-details-dialog";
 import {
   useStock,
@@ -37,10 +37,10 @@ import {
 import {
   ProductFormData,
   StockMovementFormData,
-} from "@/app/(protected)/stock/schema";
-import { ClientFormData } from "@/app/(protected)/clients/schema";
-import { ServiceFormData } from "@/app/(protected)/services/schema";
-import { AppointmentFormData } from "@/app/(protected)/appointments/schema";
+} from "@/app/dashboard/stock/schema";
+import { ClientFormData } from "@/app/dashboard/clients/schema";
+import { ServiceFormData } from "@/app/dashboard/services/schema";
+import { AppointmentFormData } from "@/app/dashboard/appointments/schema";
 import { toast } from "sonner";
 import {
   ProductFormPayload,

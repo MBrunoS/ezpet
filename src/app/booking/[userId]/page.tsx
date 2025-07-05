@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -28,8 +26,6 @@ interface BookingPageProps {
 export default function BookingPage({ params }: BookingPageProps) {
   const [currentStep, setCurrentStep] = useState<Step>("welcome");
   const [clientData, setClientData] = useState<Client | null>(null);
-  const { user } = useAuth();
-  const router = useRouter();
 
   // Usar React.use() para desempacotar os parâmetros
   const { userId } = React.use(params);
@@ -37,12 +33,6 @@ export default function BookingPage({ params }: BookingPageProps) {
   // Buscar dados do pet shop
   const { data: petShopProfile, isLoading: loadingProfile } =
     usePetShopProfileByUserId(userId);
-
-  // Se o usuário já está logado como admin, redirecionar
-  if (user) {
-    router.push("/");
-    return null;
-  }
 
   // Se o perfil do pet shop não existe, mostrar erro
   if (!loadingProfile && !petShopProfile) {
