@@ -25,7 +25,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Calendar,
-  Clock,
   PawPrint,
   DollarSign,
   ArrowLeft,
@@ -40,6 +39,9 @@ import {
 } from "@/hooks/queries";
 import { useAvailableTimeSlotsPublic } from "@/hooks/useAvailableTimeSlotsPublic";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { formatCurrency } from "@/lib/utils";
 
 const petSchema = z.object({
   name: z.string().min(1, "Nome do pet é obrigatório"),
@@ -57,6 +59,14 @@ const bookingSchema = z.object({
     message: "A data deve ser futura",
   }),
   time: z.string().min(1, "Selecione um horário"),
+  selectedExtras: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      price: z.number(),
+      description: z.string().optional(),
+    })
+  ),
   observations: z.string().optional(),
 });
 
@@ -105,6 +115,7 @@ export function BookingForm({
       serviceId: "",
       date: new Date(),
       time: "",
+      selectedExtras: [],
       observations: "",
     },
   });
@@ -187,13 +198,20 @@ export function BookingForm({
       const [hour, minute] = data.time.split(":").map(Number);
       appointmentDate.setHours(hour, minute, 0, 0);
 
+      // Calcular preço total incluindo extras
+      const extrasPrice = (data.selectedExtras || []).reduce(
+        (sum, extra) => sum + extra.price,
+        0
+      );
+      const totalPrice = selectedService.price + extrasPrice;
+
       const appointmentData: Omit<Appointment, "id" | "userId"> = {
         clientId: clientData.id,
         petId: data.petId,
         serviceId: data.serviceId,
         date: appointmentDate,
-        price: selectedService.price,
-        selectedExtras: [],
+        price: totalPrice,
+        selectedExtras: data.selectedExtras || [],
         observations: data.observations,
         status: "scheduled",
       };
@@ -212,10 +230,36 @@ export function BookingForm({
     setStep("booking");
   };
 
+  const handlePetConfirmation = (pet: Pet) => {
+    // Se o pet já está selecionado, confirma e vai para o próximo step
+    if (selectedPet?.id === pet.id) {
+      setStep("booking");
+    } else {
+      // Se é um pet diferente, seleciona ele
+      handlePetSelection(pet);
+    }
+  };
+
   const handleServiceSelection = (service: Service) => {
     setSelectedService(service);
     bookingForm.setValue("serviceId", service.id);
   };
+
+  const handleChangePet = () => {
+    setStep("pet");
+    // Não limpar o selectedPet aqui para manter a seleção visual
+    // bookingForm.setValue("petId", "");
+  };
+
+  // Calcular preço total para exibição
+  const totalPrice = useMemo(() => {
+    if (!selectedService) return 0;
+    const extrasPrice = (bookingForm.watch("selectedExtras") || []).reduce(
+      (sum, extra) => sum + extra.price,
+      0
+    );
+    return selectedService.price + extrasPrice;
+  }, [selectedService, bookingForm.watch("selectedExtras")]);
 
   if (bookingSuccess) {
     return (
@@ -289,7 +333,11 @@ export function BookingForm({
                   {pets.map((pet) => (
                     <div
                       key={pet.id}
-                      className="p-4 rounded-lg border cursor-pointer hover:bg-gray-50"
+                      className={`p-4 rounded-lg border cursor-pointer hover:bg-gray-50 ${
+                        selectedPet?.id === pet.id
+                          ? "border-green-500 bg-green-50"
+                          : ""
+                      }`}
                       onClick={() => handlePetSelection(pet)}
                     >
                       <div className="flex justify-between items-center">
@@ -298,10 +346,10 @@ export function BookingForm({
                           <p className="text-sm text-gray-600">
                             {pet.species} - {pet.breed}
                           </p>
+                          <p className="text-xs text-gray-500">
+                            {pet.age} anos • {pet.weight}kg
+                          </p>
                         </div>
-                        <Button variant="outline" size="sm">
-                          Selecionar
-                        </Button>
                       </div>
                     </div>
                   ))}
@@ -454,12 +502,70 @@ export function BookingForm({
                 </Button>
               </form>
             </Form>
+
+            {/* Botão para continuar se um pet já estiver selecionado */}
+            {selectedPet && (
+              <div className="pt-4 mt-4 border-t">
+                <Button onClick={() => setStep("booking")} className="w-full">
+                  Continuar com {selectedPet.name}
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
 
       {step === "booking" && (
         <>
+          {/* Pet Selecionado */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex gap-2 justify-between items-center">
+                <div className="flex gap-2 items-center">
+                  <PawPrint className="w-5 h-5" />
+                  Pet Selecionado
+                </div>
+                <Button variant="outline" size="sm" onClick={handleChangePet}>
+                  Trocar Pet
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {selectedPet ? (
+                <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-medium text-green-900">
+                        {selectedPet.name}
+                      </h4>
+                      <p className="text-sm text-green-700">
+                        {selectedPet.species} - {selectedPet.breed}
+                      </p>
+                      <p className="text-xs text-green-600">
+                        {selectedPet.age} anos • {selectedPet.weight}kg
+                      </p>
+                      {selectedPet.observations && (
+                        <p className="mt-1 text-xs text-green-600">
+                          Obs: {selectedPet.observations}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex gap-1 items-center text-green-600">
+                      <CheckCircle className="w-4 h-4" />
+                      <span className="text-xs font-medium">Selecionado</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+                  <p className="text-sm text-red-700">
+                    Nenhum pet selecionado. Por favor, selecione um pet.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Seleção de Serviço */}
           <Card>
             <CardHeader>
@@ -494,9 +600,6 @@ export function BookingForm({
                         <p className="font-medium">
                           R$ {service.price.toFixed(2)}
                         </p>
-                        <Button variant="outline" size="sm">
-                          Selecionar
-                        </Button>
                       </div>
                     </div>
                   </div>
@@ -521,8 +624,117 @@ export function BookingForm({
                     <span className="font-medium">Duração:</span>{" "}
                     {selectedService.duration} minutos
                   </p>
+                  <p className="text-sm font-medium text-green-600">
+                    <span className="font-medium">Preço Total:</span> R${" "}
+                    {totalPrice.toFixed(2)}
+                  </p>
                 </div>
               )}
+
+              {/* Extras do Serviço */}
+              {selectedService &&
+                selectedService.extras &&
+                selectedService.extras.length > 0 && (
+                  <div className="p-4 mt-4 space-y-3 bg-blue-50 rounded-lg">
+                    <h4 className="text-sm font-medium text-blue-900">
+                      Extras Disponíveis
+                    </h4>
+                    <div className="space-y-2">
+                      {selectedService.extras.map((extra) => {
+                        const selectedExtras =
+                          bookingForm.watch("selectedExtras") || [];
+                        const isSelected = selectedExtras.some(
+                          (e) => e.id === extra.id
+                        );
+
+                        return (
+                          <div
+                            key={extra.id}
+                            className="flex items-center p-3 space-x-3 bg-white rounded-lg border cursor-pointer hover:bg-gray-50"
+                            onClick={() => {
+                              const currentExtras =
+                                bookingForm.watch("selectedExtras") || [];
+                              if (isSelected) {
+                                bookingForm.setValue(
+                                  "selectedExtras",
+                                  currentExtras.filter((e) => e.id !== extra.id)
+                                );
+                              } else {
+                                bookingForm.setValue("selectedExtras", [
+                                  ...currentExtras,
+                                  extra,
+                                ]);
+                              }
+                            }}
+                          >
+                            <Checkbox
+                              id={extra.id}
+                              checked={isSelected}
+                              onCheckedChange={(checked: boolean) => {
+                                const currentExtras =
+                                  bookingForm.watch("selectedExtras") || [];
+                                if (checked) {
+                                  bookingForm.setValue("selectedExtras", [
+                                    ...currentExtras,
+                                    extra,
+                                  ]);
+                                } else {
+                                  bookingForm.setValue(
+                                    "selectedExtras",
+                                    currentExtras.filter(
+                                      (e) => e.id !== extra.id
+                                    )
+                                  );
+                                }
+                              }}
+                            />
+                            <div className="flex-1">
+                              <span className="text-sm font-medium">
+                                {extra.name}
+                              </span>
+                              {extra.description && (
+                                <p className="mt-1 text-xs text-gray-600">
+                                  {extra.description}
+                                </p>
+                              )}
+                            </div>
+                            <Badge
+                              variant="secondary"
+                              className="flex gap-1 items-center"
+                            >
+                              <DollarSign className="w-3 h-3" />
+                              {formatCurrency(extra.price)}
+                            </Badge>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Resumo dos extras selecionados */}
+                    {bookingForm.watch("selectedExtras")?.length > 0 && (
+                      <div className="pt-3 border-t border-blue-200">
+                        <p className="mb-2 text-sm font-medium text-blue-900">
+                          Extras Selecionados:
+                        </p>
+                        <div className="space-y-1">
+                          {bookingForm.watch("selectedExtras")?.map((extra) => (
+                            <div
+                              key={extra.id}
+                              className="flex justify-between items-center text-sm"
+                            >
+                              <span className="text-blue-700">
+                                {extra.name}
+                              </span>
+                              <span className="font-medium text-blue-900">
+                                {formatCurrency(extra.price)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
             </CardContent>
           </Card>
 
@@ -678,10 +890,30 @@ export function BookingForm({
                     )}
                   />
 
+                  {!selectedPet && (
+                    <p className="text-sm text-center text-red-600">
+                      Selecione um pet para continuar
+                    </p>
+                  )}
+                  {!selectedService && selectedPet && (
+                    <p className="text-sm text-center text-blue-600">
+                      Selecione um serviço para continuar
+                    </p>
+                  )}
+                  <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg border border-green-200">
+                    <span className="text-sm font-medium text-green-900">
+                      Preço Total do Agendamento:
+                    </span>
+                    <span className="text-lg font-bold text-green-600">
+                      {formatCurrency(totalPrice)}
+                    </span>
+                  </div>
                   <Button
                     type="submit"
                     disabled={
-                      addAppointmentMutation.isPending || !selectedService
+                      addAppointmentMutation.isPending ||
+                      !selectedService ||
+                      !selectedPet
                     }
                     className="w-full"
                   >
